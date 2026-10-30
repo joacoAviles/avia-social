@@ -328,3 +328,14 @@ def test_upgrade_preserves_existing_brand_and_closes_bootstrap():
             call_command("avia_setup_code", stdout=StringIO())
     finally:
         MigrationExecutor(connection).migrate(new_target)
+
+
+def test_connection_screen_offers_journey_and_calendar(session):
+    client, ws, journey_url = session
+    response = client.get(reverse("social_accounts:connect", args=[ws.id]))
+    assert response.status_code == 200
+    html = response.content.decode()
+    assert f'{journey_url}?step=connections' in html
+    assert "Abrir guía de configuración y continuar" in html
+    assert reverse("calendar:calendar", args=[ws.id]) in html
+    assert "Prepara tus conexiones" in html

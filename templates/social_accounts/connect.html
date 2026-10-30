@@ -12,6 +12,17 @@
         <p class="text-sm text-stone-500 mt-1">Select a platform to connect your social media account.</p>
     </div>
 
+    <section class="mb-8 p-5 rounded-xl border border-stone-200 bg-white">
+        <h3 class="text-lg font-semibold">Prepara tus conexiones</h3>
+        <p class="text-sm text-stone-600 mt-2">Las plataformas sin configurar necesitan las credenciales de una aplicación propia antes de autorizar tu cuenta. Puedes continuar con tus borradores y conectar los canales después.</p>
+        {% if request.workspace_membership.effective_permissions.manage_workspace_settings %}
+        <a class="inline-flex mt-4 underline font-semibold" href="{% url 'welcome:journey' workspace_id %}?step=connections">Abrir guía de configuración y continuar →</a>
+        {% else %}
+        <p class="text-sm mt-4">Pide al administrador de tu espacio que configure las plataformas pendientes.</p>
+        {% endif %}
+        <a class="inline-flex mt-4 ml-4 underline" href="{% url 'calendar:calendar' workspace_id %}">Ir al calendario</a>
+    </section>
+
     <!-- Platform grid -->
     <div class="overflow-y-auto pr-1">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
