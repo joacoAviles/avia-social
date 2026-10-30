@@ -10,3 +10,6 @@ No ownership of the BrightBean trademark is claimed; no endorsement is implied.
 Private brand identities/assets are runtime data, not distributed with this source.
 Operators must provide the corresponding source of their running modified version
 under AGPL section 13. Update the visible source link when modifying or deploying.
+
+Public font files are distributed under their own SIL Open Font Licenses; see static/fonts/.
+AVIA UI rebranding modifies presentation only and preserves original AGPL notices.

@@ -32,7 +32,7 @@ def _open_invite(client, *, expires_in=timedelta(days=7)):
 
 def _signup_href(response):
     content = response.content.decode()
-    marker = content.index(">Sign up</a>")
+    marker = content.index(">Crear cuenta</a>")
     start = content.rindex('href="', 0, marker) + len('href="')
     return content[start : content.index('"', start)]
 

@@ -65,20 +65,20 @@ Usage: {% include "social_accounts/partials/_account_card.html" with account=acc
                 {% endcomment %}
                 <p class="text-xs text-stone-500 mb-2">
                     {% if account.revokes_platform_grant_on_disconnect %}
-                    This revokes BrightBean's access to the account.
+                    This revokes AVIA Social's access to the account.
                     {% elif account.keeps_platform_grant_on_disconnect %}
-                    This removes the account from BrightBean only. To revoke our access entirely,
-                    remove BrightBean in Facebook &rsaquo; Settings &rsaquo; Apps and Websites.
+                    This removes the account from AVIA Social only. To revoke our access entirely,
+                    remove AVIA Social in Facebook &rsaquo; Settings &rsaquo; Apps and Websites.
                     {% else %}
-                    This removes the account from BrightBean only. To revoke our access entirely,
-                    remove BrightBean in your {{ account.get_platform_display }} settings.
+                    This removes the account from AVIA Social only. To revoke our access entirely,
+                    remove AVIA Social in your {{ account.get_platform_display }} settings.
                     {% endif %}
                 </p>
                 <p class="text-xs text-stone-500 mb-3">
                     {% if account.platform == "youtube" %}
                     YouTube data, analytics and copied comments are deleted immediately, including notification copies. Your original uploads and posts shared with other channels stay.
                     {% else %}
-                    Its analytics, inbox messages and posts made only for it are deleted from BrightBean. Posts shared with other channels stay.
+                    Its analytics, inbox messages and posts made only for it are deleted from AVIA Social. Posts shared with other channels stay.
                     {% endif %}
                 </p>
                 <div class="flex gap-2 justify-end">

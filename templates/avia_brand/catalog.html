@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Identidad · AVIA Social{% endblock %}
 {% block content %}
-<section style="padding:24px;max-width:1000px;margin:auto">
+<section class="avia-brand-panel">
 <h1>AVIA Brand System · {{ source.workspace.name }}</h1>
 <p>Fuente privada: {{ source.repository }} · Los cambios requieren aprobación.</p>
 <p>Versión activa: {{ source.active_revision.commit|default:"Sin versión aprobada" }}</p>
 <form method="post" action="{% url 'avia_brand:sync' source.workspace_id %}">{% csrf_token %}<button type="submit">Sincronizar desde GitHub</button></form>
 {% for revision in revisions %}
-<article style="border:1px solid #ccc;padding:16px;margin:16px 0">
+<article>
 <h2>{{ revision.identity.brand.name }} · {{ revision.state }}</h2><code>{{ revision.commit }}</code>
 <p>{{ revision.created_at }}</p>
 <details><summary>Identidad y estilo de la versión</summary><pre style="white-space:pre-wrap">{{ revision.identity }}</pre></details>

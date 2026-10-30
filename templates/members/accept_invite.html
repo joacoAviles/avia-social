@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join {{ invitation.organization.name }} - Brightbean</title>
+    <title>Join {{ invitation.organization.name }} - AVIA Social</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -25,7 +25,7 @@
             width: 100%;
             box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
-        .logo { font-size: 18px; font-weight: 800; color: #F97316; margin-bottom: 24px; letter-spacing: -0.02em; }
+        .logo { font-size: 18px; font-weight: 800; color: var(--brand-500); margin-bottom: 24px; letter-spacing: -0.02em; }
         h1 { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #1C1917; }
         .subtitle { font-size: 15px; color: #78716C; line-height: 1.6; margin-bottom: 24px; }
         .info-box {
@@ -66,7 +66,7 @@
             transition: opacity 0.15s;
         }
         .btn:hover { opacity: 0.9; }
-        .btn-primary { background: #F97316; color: #FFFFFF; }
+        .btn-primary { background: var(--brand-500); color: #FFFFFF; }
         .btn-secondary { background: #F5F5F4; color: #1C1917; margin-top: 8px; }
         .error { color: #DC2626; font-size: 14px; margin-bottom: 16px; }
         .or-divider {
@@ -76,14 +76,15 @@
             margin: 12px 0;
         }
     </style>
+{% include "avia_brand/theme.html" %}
 </head>
 <body>
     <div class="card">
-        <div class="logo">Brightbean</div>
+        <div class="logo">AVIA Social</div>
 
         <h1>Join {{ invitation.organization.name }}</h1>
         <p class="subtitle">
-            {{ invitation.invited_by.display_name }} invited you to join their team on Brightbean.
+            {{ invitation.invited_by.display_name }} invited you to join their team on AVIA Social.
         </p>
 
         {% if error %}

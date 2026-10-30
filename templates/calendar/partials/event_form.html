@@ -46,7 +46,7 @@
                        value="{% if event %}{{ event.color }}{% else %}#3B82F6{% endif %}"
                        class="w-9 h-9 rounded-lg border border-stone-200 cursor-pointer p-0.5">
                 <div class="flex gap-1.5"
-                     x-data="{ presets: ['#3B82F6','#22C55E','#EAB308','#F97316','#EF4444','#8B5CF6','#EC4899','#14B8A6'] }">
+                     x-data="{ presets: ['#3B82F6','#22C55E','#EAB308','var(--brand-500)','#EF4444','#8B5CF6','#EC4899','#14B8A6'] }">
                     <template x-for="hex in presets" :key="hex">
                         <button type="button"
                                 @click="$el.closest('form').querySelector('[name=color]').value = hex"

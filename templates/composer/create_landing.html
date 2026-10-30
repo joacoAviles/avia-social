@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Create - {{ workspace.name }} - Brightbean{% endblock %}
+{% block title %}Create - {{ workspace.name }} - AVIA Social{% endblock %}
 
 {% comment %}Header is rendered inside the content block to avoid overlap with the -m-6 layout{% endcomment %}
 
@@ -19,7 +19,7 @@
         margin-bottom: -1px;
     }
     .create-tab:hover { color: #1C1917; border-bottom-color: #D6D3D1; }
-    .create-tab.active { color: #C2410C; border-bottom-color: #F97316; }
+    .create-tab.active { color: var(--brand-700); border-bottom-color: var(--brand-500); }
 
     /* Kanban board */
     .kanban-column {
@@ -43,8 +43,8 @@
         min-height: 60px;
     }
     .kanban-cards.drag-over {
-        background: #FFF7ED;
-        outline: 2px dashed #FDBA74;
+        background: var(--brand-50);
+        outline: 2px dashed var(--brand-300);
         border-radius: 8px;
         margin: 0 4px 4px;
         padding: 0 4px 4px;
@@ -73,9 +73,9 @@
         opacity: 0.4;
     }
     .kanban-column.column-drag-over {
-        outline: 2px dashed #FDBA74;
+        outline: 2px dashed var(--brand-300);
         outline-offset: -2px;
-        background: #FFF7ED;
+        background: var(--brand-50);
     }
 
     /* New idea inline */
@@ -101,8 +101,8 @@
         display: inline-flex; align-items: center; gap: 4px;
         padding: 4px 10px; border-radius: 9999px;
         font-size: 11px; font-weight: 600;
-        background: #FFF7ED; color: #C2410C;
-        border: 1px solid #FED7AA;
+        background: var(--brand-50); color: var(--brand-700);
+        border: 1px solid var(--brand-200);
     }
     .tag-chip button {
         width: 14px; height: 14px; border-radius: 50%;
@@ -110,7 +110,7 @@
         background: transparent; border: none; cursor: pointer;
         color: #EA580C; font-size: 10px;
     }
-    .tag-chip button:hover { background: #FFEDD5; }
+    .tag-chip button:hover { background: var(--brand-100); }
 
     /* Modal overlay */
     .idea-modal-overlay {
@@ -337,9 +337,9 @@
         border-radius: 9999px;
         font-size: 0.6875rem;
         font-weight: 600;
-        background: var(--primary-soft, #FFF7ED);
-        color: var(--primary, #C2410C);
-        border: 1px solid var(--primary-muted, #FED7AA);
+        background: var(--primary-soft, var(--brand-50));
+        color: var(--primary, var(--brand-700));
+        border: 1px solid var(--primary-muted, var(--brand-200));
     }
     /* Emoji picker */
     .emoji-picker-popup {
@@ -1069,7 +1069,7 @@
             <!-- Footer with attribution & tags -->
             <div class="px-6 pb-5 flex items-center gap-3">
                 <span class="text-xs font-medium text-stone-400">By</span>
-                <span class="text-xs font-semibold text-stone-600 underline decoration-stone-300 underline-offset-2">Brightbean</span>
+                <span class="text-xs font-semibold text-stone-600 underline decoration-stone-300 underline-offset-2">AVIA Social</span>
                 <template x-if="viewingTemplate?.tags?.length > 0">
                     <span class="text-stone-300 mx-1">&bull;</span>
                 </template>

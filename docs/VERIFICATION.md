@@ -23,3 +23,11 @@ La CI reproduce la selección de pruebas, migraciones, validación Compose, cons
 - App/worker reiniciados; health volvió a HTTP 200.
 - La imagen no contiene `/app/.env` ni `/app/secrets`.
 - CI Linux del código de aplicación `73c7331` aprobada: https://github.com/joacoAviles/avia-social/actions/runs/41119259777
+
+## Identidad AVIA Rockets (2026-10-30)
+
+- Apariencia del acceso, navegación, editor, calendario, cuentas, portal y correos actualizada; atribución AGPL conservada.
+- 881 pruebas aprobadas (560 avisos heredados) en la selección ampliada de regresión. Cinco pruebas nuevas validan integridad, rechazo de YAML/CSS inseguros, privacidad y separación de identidades.
+- Revisión visual del acceso en escritorio y ancho móvil de 390 px, sin desbordamiento horizontal; panel revisado con cuenta temporal local.
+- Manifiesto privado importado solo al montaje local ignorado. El repositorio público contiene un tema neutral y fuentes públicas con licencias OFL; no incluye el manifiesto ni recursos privados.
+- No existe un logo maestro aprobado en el catálogo consultado: se usa nombre tipográfico, sin inventar isotipo. No se verificó publicación social ni se modificó producción.

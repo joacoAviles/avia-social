@@ -13,27 +13,24 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Brand Tokens - BrightBean Orange */
-  --brand-50:  #FFF7ED;
-  --brand-100: #FFEDD5;
-  --brand-200: #FED7AA;
-  --brand-300: #FDBA74;
-  --brand-400: #FB923C;
-  --brand-500: #F97316;
-  --brand-600: #EA580C;
-  --brand-700: #C2410C;
-  --brand-800: #9A3412;
-  --brand-900: #7C2D12;
+  /* Neutral distribution defaults; approved runtime brand tokens override these. */
+  --brand-50: #f8fafc;
+  --brand-100: #f1f5f9;
+  --brand-200: #e2e8f0;
+  --brand-300: #cbd5e1;
+  --brand-400: #94a3b8;
+  --brand-500: #475569;
+  --brand-600: #334155;
+  --brand-700: #1e293b;
+  --brand-800: #172033;
+  --brand-900: #111827;
+  --brand-green-100: var(--brand-100);
+  --brand-green-200: var(--brand-200);
+  --brand-green-500: var(--brand-500);
+  --brand-green-600: var(--brand-600);
 
-  /* Brand Tokens - BrightBean Green (the bean in the logo) — used for
-     selection controls (checkboxes, toggle switches) */
-  --brand-green-100: #EFF2DC;
-  --brand-green-200: #DDE4B9;
-  --brand-green-500: #94A43F;
-  --brand-green-600: #7B8A33;
-
-  --brand-font-display: Georgia, 'Times New Roman', serif;
-  --brand-font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --brand-font-display: 'Inter', system-ui, sans-serif;
+  --brand-font-body: 'Inter', system-ui, sans-serif;
   --brand-font-mono: ui-monospace, SFMono-Regular, 'Cascadia Code', 'Consolas', monospace;
 
   /* Semantic Tokens */
@@ -58,7 +55,7 @@
 
   /* Surfaces */
   --surface-0: #FFFFFF;
-  --surface-page: rgb(247, 246, 242);
+  --surface-page: #f4f6fa;
   --surface-1: var(--neutral-50);
   --surface-2: var(--neutral-100);
   --surface-3: var(--neutral-200);
@@ -99,7 +96,7 @@
   --shadow-md:  0 4px 6px rgba(23,20,18,0.06), 0 2px 4px rgba(23,20,18,0.04);
   --shadow-lg:  0 10px 15px rgba(23,20,18,0.08), 0 4px 6px rgba(23,20,18,0.04);
   --shadow-xl:  0 20px 25px rgba(23,20,18,0.08), 0 8px 10px rgba(23,20,18,0.04);
-  --shadow-primary: 0 4px 14px rgba(249,115,22,0.28);
+  --shadow-primary: 0 4px 14px color-mix(in srgb, var(--primary) 24%, transparent);
 
   /* Radii */
   --radius-sm:   0.25rem;

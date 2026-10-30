@@ -99,3 +99,7 @@ sh scripts/test.sh
 Para pruebas use una instalación desechable o CI. El script obtiene la contraseña del entorno del contenedor sin imprimirla. No pruebe sobre una instalación productiva.
 
 Conserve [LICENSE](LICENSE), [NOTICE](NOTICE) y los avisos originales. La interfaz ofrece el código fuente; al desplegar cambios debe ofrecer el código correspondiente a la versión que ejecuta. Los activos privados de marca no están licenciados ni distribuidos como parte de este código. [README original](UPSTREAM_README.md), solo como referencia del upstream; para instalar AVIA prevalece este documento.
+
+## Apariencia AVIA
+
+La interfaz usa componentes compartidos y una identidad corporativa cargada en ejecución desde el repositorio privado de Avia Rockets. Consulte [configuración de apariencia](docs/BRANDING.md). El clon público usa una apariencia neutra hasta disponer de una instantánea local o revisión aprobada; no distribuye los recursos privados.

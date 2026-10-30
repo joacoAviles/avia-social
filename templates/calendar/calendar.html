@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Publish - {{ workspace.name }} - Brightbean{% endblock %}
+{% block title %}Publish - {{ workspace.name }} - AVIA Social{% endblock %}
 
 {% block page_header %}
 <div class="flex flex-wrap items-center justify-between gap-3 mb-4 lg:mb-[25px]">
@@ -54,7 +54,7 @@
     .cal-day:hover { background: #FAFAF9; }
     .cal-day.past { background: #F5F5F4; }
     .cal-day.past:hover { background: #EEEEEC; }
-    .cal-day.today { background: #FFF7ED; }
+    .cal-day.today { background: var(--brand-50); }
     .cal-day.other-month { opacity: 0.4; }
     .cal-day .day-num {
         font-size: 13px; font-weight: 600;
@@ -65,7 +65,7 @@
     }
     .cal-day.past .day-num { color: #78716C; }
     .cal-day.today .day-num {
-        background: #F97316; color: white;
+        background: var(--brand-500); color: white;
     }
 
     .post-chip {
@@ -83,16 +83,16 @@
     /* Status colors */
     .status-draft      { background: #F5F5F4; color: #57534E; border: 1px solid #E7E5E4; }
     .status-draft .chip-dot { background: #A8A29E; }
-    .status-pending_review, .status-pending_client { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
-    .status-pending_review .chip-dot, .status-pending_client .chip-dot { background: #F97316; }
+    .status-pending_review, .status-pending_client { background: var(--brand-50); color: var(--brand-700); border: 1px solid var(--brand-200); }
+    .status-pending_review .chip-dot, .status-pending_client .chip-dot { background: var(--brand-500); }
     .status-scheduled  { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
     .status-scheduled .chip-dot { background: #3B82F6; }
     .status-published  { background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; }
     .status-published .chip-dot { background: #22C55E; }
     .status-approved   { background: #F0FDFA; color: #0F766E; border: 1px solid #99F6E4; }
     .status-approved .chip-dot { background: #14B8A6; }
-    .status-changes_requested { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
-    .status-changes_requested .chip-dot { background: #F97316; }
+    .status-changes_requested { background: var(--brand-50); color: var(--brand-700); border: 1px solid var(--brand-200); }
+    .status-changes_requested .chip-dot { background: var(--brand-500); }
     .status-rejected   { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
     .status-rejected .chip-dot { background: #EF4444; }
     .status-publishing { background: #EEF2FF; color: #4338CA; border: 1px solid #C7D2FE; }
@@ -112,15 +112,15 @@
         cursor: pointer; transition: all 150ms ease;
     }
     .view-btn:hover { color: #1C1917; background: #F5F5F4; }
-    .view-btn.active { color: #C2410C; background: #FFF7ED; border: 1px solid #FDBA74; box-shadow: 0 1px 2px rgba(194, 65, 12, 0.08); }
+    .view-btn.active { color: var(--brand-700); background: var(--brand-50); border: 1px solid var(--brand-300); box-shadow: 0 1px 2px rgba(194, 65, 12, 0.08); }
 
     /* Filter chips */
     .filter-chip {
         display: inline-flex; align-items: center; gap: 4px;
         padding: 4px 10px; border-radius: 9999px;
         font-size: 11px; font-weight: 600;
-        background: #FFF7ED; color: #C2410C;
-        border: 1px solid #FED7AA;
+        background: var(--brand-50); color: var(--brand-700);
+        border: 1px solid var(--brand-200);
     }
     .filter-chip button {
         width: 14px; height: 14px; border-radius: 50%;
@@ -128,7 +128,7 @@
         background: transparent; border: none; cursor: pointer;
         color: #EA580C; font-size: 10px;
     }
-    .filter-chip button:hover { background: #FFEDD5; }
+    .filter-chip button:hover { background: var(--brand-100); }
 
     /* Publish tab styles */
     .publish-tab {
@@ -142,7 +142,7 @@
         margin-bottom: -1px;
     }
     .publish-tab:hover { color: #1C1917; border-bottom-color: #D6D3D1; }
-    .publish-tab.active { color: #C2410C; border-bottom-color: #F97316; }
+    .publish-tab.active { color: var(--brand-700); border-bottom-color: var(--brand-500); }
 
     /* Hide scrollbar on filter containers */
     .cal-filters-scroll::-webkit-scrollbar { display: none; }
@@ -167,7 +167,7 @@
     .publish-filter-select:hover,
     .cal-filter-select:hover { border-color: #D6D3D1; }
     .publish-filter-select:focus,
-    .cal-filter-select:focus { outline: none; border-color: #F97316; box-shadow: 0 0 0 2px rgba(249,115,22,0.15); }
+    .cal-filter-select:focus { outline: none; border-color: var(--brand-500); box-shadow: 0 0 0 2px rgba(249,115,22,0.15); }
     .publish-filter-icon,
     .cal-filter-icon {
         position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
@@ -193,7 +193,7 @@
         display: none;
         position: absolute; top: 6px; right: 6px;
         width: 22px; height: 22px; border-radius: 50%;
-        background: #F97316; color: white; border: none;
+        background: var(--brand-500); color: white; border: none;
         align-items: center; justify-content: center;
         cursor: pointer; font-size: 14px; line-height: 1;
         box-shadow: 0 2px 6px rgba(249,115,22,0.35);
@@ -209,7 +209,7 @@
         top: 50%; left: 50%; right: auto;
         transform: translate(-50%, -50%);
         width: 32px; height: 32px;
-        background: #F97316; color: white;
+        background: var(--brand-500); color: white;
         box-shadow: 0 2px 6px rgba(249,115,22,0.35);
         border: none;
     }
@@ -279,11 +279,11 @@
         width: 18px;
         height: 18px;
         border-radius: 9999px;
-        background: #FFEDD5;
-        color: #C2410C;
+        background: var(--brand-100);
+        color: var(--brand-700);
     }
     .calendar-slot-add:hover {
-        background: #FED7AA;
+        background: var(--brand-200);
         transform: scale(1.05);
     }
     .calendar-post-slot-check {
@@ -308,7 +308,7 @@
        the cursor-following drag clone stays visible. */
     .chip-ghost { display: none !important; }
     /* Highlight the day cell currently under the drag (toggled in onMove). */
-    .cal-drop.cal-drop-active { background: #FFF7ED; box-shadow: inset 0 0 0 2px #F97316; }
+    .cal-drop.cal-drop-active { background: var(--brand-50); box-shadow: inset 0 0 0 2px var(--brand-500); }
     /* While dragging, suppress the per-cell "+" add buttons that would otherwise
        flicker under the cursor as it crosses cells. */
     body.cal-dragging .cal-add-btn { display: none !important; }
@@ -324,8 +324,8 @@
     .post-chip:hover .cal-select-box,
     .cal-select-box.is-checked,
     body.has-selection .cal-select-box { opacity: 1; }
-    .cal-select-box.is-checked { background: #F97316; border-color: #F97316; }
-    .cal-select-box:hover { border-color: #F97316; }
+    .cal-select-box.is-checked { background: var(--brand-500); border-color: var(--brand-500); }
+    .cal-select-box:hover { border-color: var(--brand-500); }
     /* In list rows the checkbox is always visible (there's room). */
     .row-select-box { opacity: 1; }
     /* The shared toast host and the selection bar both sit bottom-centre. Lift

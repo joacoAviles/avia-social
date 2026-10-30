@@ -11,4 +11,4 @@ else
     echo 'Docker Compose v2 is required.' >&2
     exit 1
 fi
-compose run --rm --no-deps --user 0 -e DJANGO_SETTINGS_MODULE=config.settings.test -e DB_HOST=postgres -e DB_USER=avia app sh -c 'export DB_PASSWORD="$POSTGRES_PASSWORD"; pytest apps/avia_brand apps/members apps/composer apps/calendar apps/approvals apps/api apps/publisher tests/test_media_routing.py'
+compose run --rm --no-deps --user 0 -e DJANGO_SETTINGS_MODULE=config.settings.test -e DB_HOST=postgres -e DB_USER=avia app sh -c 'export DB_PASSWORD="$POSTGRES_PASSWORD"; pytest apps/avia_brand apps/accounts apps/common/tests/test_review_banner.py tests/test_oauth_pkce.py apps/members apps/composer apps/calendar apps/approvals apps/api apps/publisher tests/test_media_routing.py'

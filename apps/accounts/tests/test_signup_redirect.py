@@ -78,7 +78,7 @@ def _google_callback(email, session=None):
 
 def _signup_href(response):
     content = response.content.decode()
-    marker = content.index(">Sign up</a>")
+    marker = content.index(">Crear cuenta</a>")
     start = content.rindex('href="', 0, marker) + len('href="')
     return content[start : content.index('"', start)]
 

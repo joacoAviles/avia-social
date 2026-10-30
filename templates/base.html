@@ -5,11 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}AVIA Social{% endblock %}</title>
-    <link rel="icon" href="{% static 'favicon/favicon.ico' %}" sizes="any">
-    <link rel="icon" type="image/svg+xml" href="{% static 'favicon/favicon.svg' %}">
-    <link rel="icon" type="image/png" sizes="96x96" href="{% static 'favicon/favicon-96x96.png' %}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
-    <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
     <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <script nonce="{{ request.csp_nonce }}">
@@ -182,7 +177,7 @@
         .idea-selected-tags .idea-tag-chip {
             display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 9999px;
             font-size: 0.6875rem; font-weight: 600;
-            background: var(--primary-soft, #FFF7ED); color: var(--primary, #C2410C); border: 1px solid var(--primary-muted, #FED7AA);
+            background: var(--primary-soft, var(--brand-50)); color: var(--primary, var(--brand-700)); border: 1px solid var(--primary-muted, var(--brand-200));
         }
         .idea-selected-tags .idea-tag-chip button {
             display: flex; align-items: center; justify-content: center;
@@ -205,6 +200,7 @@
         .emoji-picker-item:hover { background: var(--neutral-100); }
     </style>
     {% block extra_head %}{% endblock %}
+{% include "avia_brand/theme.html" %}
 </head>
 <body class="text-gray-900 min-h-screen" style="background: var(--surface-page);">
     {% csrf_token %}
@@ -284,7 +280,7 @@
              class="fixed inset-0 bg-black/30 z-30 lg:hidden"></div>
 
         <!-- Sidebar -->
-        <aside class="flex flex-col flex-shrink-0 sidebar-initial
+        <aside class="flex flex-col flex-shrink-0 sidebar-initial avia-sidebar
                       fixed inset-y-0 left-0 z-40 w-60 bg-white
                       transition-transform duration-200
                       lg:relative lg:z-auto lg:translate-x-0 lg:bg-transparent"
@@ -297,6 +293,7 @@
 
             <!-- Workspace switcher (top of sidebar) -->
             <div class="relative border-b border-stone-100" x-data="{ wsOpen: false }">
+                <div class="avia-sidebar-brand" x-show="!sidebarCollapsed"><span class="avia-company-label">AVIA ROCKETS</span>{% include "avia_brand/wordmark.html" %}</div>
                 <button @click="wsOpen = !wsOpen"
                         class="sidebar-ws-btn w-full flex items-center gap-2.5 px-4 py-3.5 text-left hover:bg-black/[0.04] transition-colors cursor-pointer rounded-br-lg"
                         :class="sidebarCollapsed ? 'justify-center px-0' : 'gap-2.5 px-4'">
@@ -316,7 +313,7 @@
                     {% endif %}
                     <span class="flex-1 font-bold text-[0.9375rem] tracking-tight text-stone-900 truncate" x-show="!sidebarCollapsed" x-cloak>{{ sidebar_workspaces.0.name }}</span>
                     {% else %}
-                    <div class="sidebar-logo-mark flex-shrink-0">P</div>
+                    <div class="sidebar-logo-mark flex-shrink-0">A</div>
                     <span class="flex-1 font-bold text-[0.9375rem] tracking-tight text-stone-900 truncate" x-show="!sidebarCollapsed" x-cloak>AVIA Social</span>
                     {% endif %}
                     {% endwith %}
@@ -897,7 +894,7 @@
                     {% endif %}
                     <span class="text-sm font-semibold text-stone-800 truncate max-w-[160px]">{{ current_ws.name }}</span>
                     {% else %}
-                    <div class="w-7 h-7 rounded-md flex items-center justify-center text-white text-[11px] font-bold" style="background: var(--primary);">P</div>
+                    <div class="w-7 h-7 rounded-md flex items-center justify-center text-white text-[11px] font-bold" style="background: var(--primary);">A</div>
                     <span class="text-sm font-semibold text-stone-800">AVIA Social</span>
                     {% endif %}
                     {% endwith %}
@@ -1004,7 +1001,7 @@
                 data = JSON.parse(canvas.dataset.series || '[]');
                 labels = JSON.parse(canvas.dataset.labels || '[]');
             } catch (e) { return; }
-            var color = '#F97316';
+            var color = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
             if (window._bbHeroChart) { window._bbHeroChart.destroy(); }
             var ctx = canvas.getContext('2d');
             var gradient = ctx.createLinearGradient(0, 0, 0, 260);
@@ -1422,6 +1419,6 @@
         </div>
     </div>
     {% endif %}
-<footer style="padding:12px;text-align:center;font-size:12px">AVIA Social 0.1 · Derivado de BrightBean Studio · AGPL-3.0 · <a href="https://github.com/joacoAviles/avia-social">Código fuente</a>{% if request.workspace %} · <a href="{% url 'avia_brand:catalog' request.workspace.id %}">Identidad de marca</a>{% endif %}</footer>
+{% include "avia_brand/credits.html" %}
 </body>
 </html>

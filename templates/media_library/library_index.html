@@ -13,8 +13,8 @@
                 background var(--dur-base, 200ms) var(--ease-out, ease);
   }
   .ml-dropzone.drag-over {
-    border-color: var(--primary, #F97316);
-    background: var(--primary-soft, #FFF7ED);
+    border-color: var(--primary, var(--brand-500));
+    background: var(--primary-soft, var(--brand-50));
   }
   .ml-asset-card {
     background: var(--surface-0, #FFF);
@@ -32,8 +32,8 @@
   }
   .ml-folder-item:hover { background: var(--surface-1, #FAFAF9); }
   .ml-folder-item.active {
-    background: var(--primary-soft, #FFF7ED);
-    color: var(--brand-700, #C2410C);
+    background: var(--primary-soft, var(--brand-50));
+    color: var(--brand-700, var(--brand-700));
     font-weight: 600;
   }
   .ml-sidebar {
@@ -53,9 +53,9 @@
   }
   .ml-filter-pill:hover { border-color: var(--border-hover, #D6D3D1); }
   .ml-filter-pill.active {
-    background: var(--primary, #F97316);
+    background: var(--primary, var(--brand-500));
     color: var(--text-inverse, #FFF);
-    border-color: var(--primary, #F97316);
+    border-color: var(--primary, var(--brand-500));
   }
   .ml-progress-bar {
     background: var(--surface-2, #F5F5F4);
@@ -65,7 +65,7 @@
   }
   .ml-progress-fill {
     height: 100%;
-    background: var(--primary, #F97316);
+    background: var(--primary, var(--brand-500));
     border-radius: 9999px;
     transition: width 150ms ease;
   }

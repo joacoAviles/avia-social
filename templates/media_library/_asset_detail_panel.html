@@ -37,14 +37,14 @@
     {% if is_shared_library and is_admin %}
     <a href="{% url 'media_library_org:shared_asset_edit' asset_id=asset.id %}"
        class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white rounded-full transition-all btn-primary-hover"
-       style="background: var(--primary, #F97316); box-shadow: var(--shadow-primary);">
+       style="background: var(--primary, var(--brand-500)); box-shadow: var(--shadow-primary);">
       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
       Edit
     </a>
     {% elif not asset.is_shared %}
     <a href="{% url 'media_library:asset_edit' workspace_id=workspace.id asset_id=asset.id %}"
        class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white rounded-full transition-all btn-primary-hover"
-       style="background: var(--primary, #F97316); box-shadow: var(--shadow-primary);">
+       style="background: var(--primary, var(--brand-500)); box-shadow: var(--shadow-primary);">
       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
       Edit
     </a>

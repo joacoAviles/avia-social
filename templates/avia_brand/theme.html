@@ -1,0 +1,3 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/avia-shell.css' %}">
+{% if avia_ui_tokens %}<style nonce="{{ request.csp_nonce }}">:root { {% for key,value in avia_ui_tokens %}{{ key }}: {{ value|safe }}; {% endfor %} }</style>{% endif %}

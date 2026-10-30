@@ -36,12 +36,12 @@ class NoncedSwagger(Swagger):
 
 
 api = NinjaAPI(
-    title="Brightbean Agent API",
+    title="AVIA Social API",
     version="1.0.0",
     description=(
         "Programmatic access for external AI agents. Authentication is via "
         "scoped bearer tokens; create one from the Organization → API Keys "
-        "page in the Brightbean Studio settings.\n\n"
+        "page in the AVIA Social settings.\n\n"
         "**User-Agent.** Send a `User-Agent` header naming your client "
         "(e.g. `my-agent/1.0`). The hosted Studio sits behind Cloudflare, "
         "which rejects Python's standard-library default "

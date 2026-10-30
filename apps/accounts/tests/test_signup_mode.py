@@ -161,19 +161,19 @@ class TestExistingUsersAreUnaffected:
 class TestLoginPageSignupLink:
     def test_link_shown_when_open(self, settings, client):
         settings.SIGNUP_MODE = "open"
-        assert b"Sign up" in client.get(reverse("account_login")).content
+        assert b"Crear cuenta" in client.get(reverse("account_login")).content
 
     def test_link_hidden_when_closed(self, settings, client):
         settings.SIGNUP_MODE = "closed"
-        assert b"Sign up" not in client.get(reverse("account_login")).content
+        assert b"Crear cuenta" not in client.get(reverse("account_login")).content
 
     def test_link_hidden_in_invite_mode_without_invite(self, settings, client):
         settings.SIGNUP_MODE = "invite"
-        assert b"Sign up" not in client.get(reverse("account_login")).content
+        assert b"Crear cuenta" not in client.get(reverse("account_login")).content
 
     def test_link_shown_in_invite_mode_with_invite(self, settings, client, invitation):
         settings.SIGNUP_MODE = "invite"
         session = client.session
         session["pending_invite_token"] = invitation.token
         session.save()
-        assert b"Sign up" in client.get(reverse("account_login")).content
+        assert b"Crear cuenta" in client.get(reverse("account_login")).content
