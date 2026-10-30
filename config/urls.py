@@ -14,6 +14,7 @@ from apps.oauth_server import views as oauth_views
 logger = logging.getLogger(__name__)
 
 urlpatterns = [
+    path("welcome/", include("apps.avia_brand.welcome_urls")),
     path("brand-system/", include("apps.avia_brand.urls")),
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health_check"),

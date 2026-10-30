@@ -76,3 +76,7 @@ No activar publicación ni automatizaciones reales hasta cerrar las condiciones 
 - [Imagen PostgreSQL: inicialización y variables](https://hub.docker.com/_/postgres).
 - [Django: migraciones y reversión](https://docs.djangoproject.com/en/5.2/topics/migrations/#reversing-migrations).
 - [n8n: clave de cifrado propia](https://docs.n8n.io/hosting/configuration/configuration-examples/encryption-key/).
+
+## Actualización posterior: onboarding distribuible
+
+Se incorporaron instalador Docker, bootstrap protegido y onboarding retomable; consulte [ONBOARDING.md](ONBOARDING.md) y la evidencia en [VERIFICATION.md](VERIFICATION.md). La conexión GitHub ya admite repositorios propios explícitamente verificados y tokens cifrados en DB; las fuentes AVIA originales conservan su compatibilidad. Google de acceso puede configurarse desde el asistente por un superusuario. Esto no cierra los pendientes de OAuth real, restauración integral ni preparación de cada servidor.

@@ -921,7 +921,7 @@
     </div>
 
     <!-- Onboarding checklist popup (fixed bottom-right) -->
-    {% include "onboarding/partials/_checklist.html" %}
+    {% if not welcome_active %}{% include "onboarding/partials/_checklist.html" %}{% endif %}
 
     {% else %}
     <main class="auth-bg min-h-screen flex items-center justify-center py-12 px-4" style="font-family: var(--font-body);">

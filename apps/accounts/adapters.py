@@ -116,7 +116,24 @@ class AccountAdapter(DefaultAccountAdapter):
 
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):
-    """Custom adapter that syncs Google social logins to OAuthConnection."""
+    """Google sign-in with instance credentials and existing account policies."""
+
+    def get_app(self, request, provider, client_id=None):
+        if provider == "google":
+            from allauth.socialaccount.models import SocialApp
+
+            from apps.avia_brand.models import InstallationSetup
+
+            state = InstallationSetup.objects.filter(pk=1).first()
+            credentials = state.google_credentials if state else {}
+            if credentials and (client_id is None or client_id == credentials["client_id"]):
+                return SocialApp(
+                    provider="google",
+                    client_id=credentials["client_id"],
+                    secret=credentials["client_secret"],
+                    name="Google",
+                )
+        return super().get_app(request, provider, client_id=client_id)
 
     def populate_user(self, request, sociallogin, data):
         """Set user.name from Google profile (custom User model has 'name', not first/last)."""

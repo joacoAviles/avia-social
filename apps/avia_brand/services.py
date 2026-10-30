@@ -5,6 +5,7 @@ import hashlib
 import json
 import re
 from pathlib import Path
+from urllib.parse import quote
 
 import httpx
 import yaml
@@ -27,7 +28,13 @@ class SyncError(Exception):
 
 
 class GitHubReader:
-    def __init__(self, repository):
+    def __init__(self, repository, token=None):
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,38}/[A-Za-z0-9][A-Za-z0-9_.-]{0,59}", repository):
+            raise SyncError("Invalid repository")
+        if token:
+            self.repository = repository
+            self.token = token
+            return
         if repository not in REPOSITORIES:
             raise SyncError("Repository not allowed")
         self.repository = repository
@@ -83,8 +90,10 @@ class GitHubReader:
 
 
 def sync(source, actor=None):
-    reader = GitHubReader(source.repository)
-    commit = reader.get("/commits/main")["sha"]
+    reader = (
+        GitHubReader(source.repository, source.github_token) if source.github_token else GitHubReader(source.repository)
+    )
+    commit = reader.get("/commits/" + quote(source.branch, safe=""))["sha"]
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise SyncError("Invalid commit")
     tree = reader.get("/git/trees/" + commit + "?recursive=1")

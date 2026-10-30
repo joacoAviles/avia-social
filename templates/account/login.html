@@ -32,7 +32,7 @@
         <!-- Social Login -->
         {% if SOCIALACCOUNT_ENABLED %}
             {% get_providers as socialaccount_providers %}
-            {% if socialaccount_providers %}
+            {% if socialaccount_providers and avia_google_configured %}
                 <div class="space-y-3 mb-6">
                     {% for provider in socialaccount_providers %}
                         {% provider_login_url provider process="login" as href %}

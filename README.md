@@ -8,25 +8,24 @@ Gestión social autohospedada, derivada de [BrightBean Studio](https://github.co
 
 Cada persona u organización instala AVIA Social en su propio Docker y controla sus datos, usuarios, credenciales y respaldos. No necesita infraestructura del mantenedor ni acceso a los repositorios privados de AVIA para iniciar la aplicación con el tema neutral.
 
-Las conexiones sociales requieren las aplicaciones OAuth y permisos de cada instalación. Los repositorios privados de marca son una integración específica y opcional para iniciar el producto: el catálogo actual solo admite los tres repositorios AVIA indicados abajo; todavía no es un conector general para cualquier repositorio de marca.
+Las conexiones sociales requieren las aplicaciones OAuth y permisos de cada instalación. GitHub es opcional: cada instalación puede vincular explícitamente su propio repositorio de identidad con credenciales de lectura. Las tres fuentes privadas AVIA siguen siendo exclusivas de sus marcas y no son necesarias para arrancar.
 
 El objetivo de una versión estable es permitir instalación limpia y actualizaciones verificadas sin recrear datos ni conexiones. La versión 0.1 sigue en validación; consulte las condiciones de aceptación antes de usar cuentas reales.
 
 ## Instalación
 
-Requisitos: Git, Python 3 para generar configuración, Docker Engine/Desktop y Docker Compose v2. Reserve inicialmente 4 GB de RAM y 5 GB de disco; mida el consumo antes de alojar junto a otros servicios. Construcción inicial requiere internet.
+Requisitos: Git, Docker Engine/Desktop y Docker Compose v2; shell POSIX para el instalador (macOS/Linux/WSL). La ruta manual requiere Python 3. Reserve inicialmente 4 GB de RAM y 5 GB de disco; mida el consumo antes de alojar junto a otros servicios. Construcción inicial requiere internet.
 
 ```sh
 git clone https://github.com/joacoAviles/avia-social.git
 cd avia-social
-python3 scripts/setup.py
-docker compose up -d --build
-docker compose exec app python manage.py createsuperuser
-# Sustituya el correo por el usado en el paso anterior:
-docker compose exec app python manage.py avia_bootstrap --email tu-correo@example.com
+sh scripts/install.sh
 ```
 
-Abra **http://localhost:8088**, inicie sesión con ese usuario y seleccione una marca. El enlace **Identidad de marca** está al pie de la interfaz. El alta pública está cerrada. El usuario propietario puede invitar/asignar miembros; el correo saliente está desactivado en esta edición inicial. Puede crear usuarios mediante administración local.
+Abra **http://localhost:8088/** e introduzca el código de un solo uso mostrado por el instalador. Cree el administrador, nombre su marca y configure las conexiones desde el onboarding. Puede omitir conexiones y empezar con borradores. [Guía de primer inicio, instalación manual y recuperación de un inicio interrumpido](docs/ONBOARDING.md).
+
+
+El alta pública permanece cerrada. Para instalaciones existentes se conservan usuarios y datos; use **Guía de inicio y conexiones** al pie de la interfaz. El correo saliente está desactivado por defecto; las invitaciones y recuperación por correo necesitan configuración del administrador.
 
 ```sh
 docker compose ps
@@ -42,7 +41,7 @@ Antes de conectar cuentas reales, revise la [auditoría previa a instalación](d
 
 ## Identidad privada
 
-Las únicas fuentes admitidas son:
+El onboarding admite un repositorio explícito por marca, verificado con credenciales de lectura. Para las marcas AVIA, sus únicas fuentes de identidad siguen siendo:
 
 - `joacoAviles/joaco-avia-brand`
 - `joacoAviles/avia-rockets-brand`
@@ -62,7 +61,7 @@ El directorio se monta en modo lectura, no se incorpora a Git ni a la imagen Doc
 docker compose exec app python manage.py avia_sync_brands
 ```
 
-Se lee `main` una vez y se fija el commit SHA completo. Se cataloga `brand/` y `assets/`, excluyendo archivos ocultos, symlinks, submódulos y archivos mayores de 5 MiB. `brand/brand.yaml` debe usar `schema_version: 1` y contener `brand.name`. Un cambio crea una revisión **pendiente**; el propietario o rol con `manage_workspace_settings` aprueba/rechaza en la interfaz. Los borradores de identidad no reemplazan la versión activa. Revisiones ya decididas no se reescriben. Para volver a una identidad anterior, revierta en GitHub y sincronice el nuevo commit.
+Se lee la rama configurada (predeterminada del repositorio al vincularlo; `main` en fuentes AVIA heredadas) una vez y se fija el commit SHA completo. Se cataloga `brand/` y `assets/`, excluyendo archivos ocultos, symlinks, submódulos y archivos mayores de 5 MiB. `brand/brand.yaml` debe usar `schema_version: 1` y contener `brand.name`. Un cambio crea una revisión **pendiente**; el propietario o rol con `manage_workspace_settings` aprueba/rechaza en la interfaz. Los borradores de identidad no reemplazan la versión activa. Revisiones ya decididas no se reescriben. Para volver a una identidad anterior, revierta en GitHub y sincronice el nuevo commit.
 
 La identidad aprobada gobierna nombre y colores del workspace; tipografías, estilo y catálogo se consultan en el panel. No se descargan ni sirven fuentes privadas automáticamente. Recursos aprobados se descargan autenticados y por SHA, con `no-store`; **no se copian automáticamente a la biblioteca pública de medios**. No se inventan logos o campos TBD. Los datos sincronizados se guardan únicamente en su PostgreSQL privado.
 
@@ -88,7 +87,7 @@ Para habilitar publicaciones, valide primero OAuth, cuenta de prueba, permisos, 
 
 Cree API keys desde Organization → API Keys con el mínimo alcance. La emisión heredada exige al menos una cuenta conectada en la allowlist y la API exige HTTPS para bearer; el arranque local HTTP sirve para la interfaz, no habilita automáticamente integraciones API externas. `/api/v1/me/` permite verificar alcance; `/api/v1/brand/` exige `manage_workspace_settings` y devuelve solo la marca de la clave, con identidad aprobada. No inserte tokens en URLs ni archivos de workflow.
 
-GitHub: configure `AVIA_GITHUB_WEBHOOK_SECRET` y `POST /brand-system/webhooks/github/` detrás de HTTPS. Se aceptan eventos push a main con firma SHA-256 y delivery UUID; solo registran `sync_requested`. Ejecute `avia_sync_brands` desde Rundeck para sincronización periódica. **El webhook no aprueba ni publica.**
+GitHub: configure `AVIA_GITHUB_WEBHOOK_SECRET` y `POST /brand-system/webhooks/github/` detrás de HTTPS. Se aceptan eventos push a la rama configurada con firma SHA-256 y delivery UUID; solo registran `sync_requested`. Ejecute `avia_sync_brands` desde Rundeck para sincronización periódica. **El webhook no aprueba ni publica.**
 
 Salida: configure `AVIA_OUTBOUND_WEBHOOK_URL` (HTTPS público controlado por usted) y `AVIA_OUTBOUND_WEBHOOK_SECRET`; ejecute:
 

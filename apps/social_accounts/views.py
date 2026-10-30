@@ -16,6 +16,7 @@ from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 from django_ratelimit.decorators import ratelimit
@@ -444,6 +445,10 @@ def oauth_callback(request, platform):
             "Failed to connect account. Please try again.",
         )
 
+    from apps.avia_brand.models import WelcomeProgress
+
+    if WelcomeProgress.objects.filter(workspace_id=workspace_id, completed_at__isnull=True).exists():
+        return redirect(reverse("welcome:journey", args=[workspace_id]) + "?step=connections")
     return redirect("calendar:calendar", workspace_id=workspace_id)
 
 

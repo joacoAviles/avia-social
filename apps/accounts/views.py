@@ -18,6 +18,15 @@ def dashboard(request):
     from apps.members.models import WorkspaceMembership
 
     user = request.user
+    from apps.avia_brand.models import WelcomeProgress
+
+    if user.last_workspace_id:
+        pending = WelcomeProgress.objects.filter(workspace_id=user.last_workspace_id, completed_at__isnull=True).first()
+        membership = WorkspaceMembership.objects.filter(
+            user=user, workspace_id=user.last_workspace_id, workspace__is_archived=False
+        ).first()
+        if pending and membership and membership.effective_permissions.get("manage_workspace_settings"):
+            return redirect("welcome:journey", workspace_id=user.last_workspace_id)
 
     # Only trust last_workspace_id if the user still has an active membership
     # in that workspace. Otherwise the org may have been deleted out from under

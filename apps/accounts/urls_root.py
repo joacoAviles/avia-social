@@ -1,7 +1,7 @@
 from django.urls import path
 
-from . import views
+from apps.avia_brand.welcome import entry
 
 urlpatterns = [
-    path("", views.dashboard, name="dashboard"),
+    path("", entry, name="dashboard"),
 ]

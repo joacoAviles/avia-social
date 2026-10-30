@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Bienvenido · AVIA Social{% endblock %}
+{% block auth_content %}
+<section class="journey-setup">
+ <div class="journey-intro"><span class="avia-eyebrow">TU INSTANCIA. TU ESPACIO.</span>{% include "avia_brand/wordmark.html" %}<h1>Tu próximo capítulo<br>empieza aquí.</h1><p>Crea tu cuenta administradora. Después prepara tu marca y conecta los canales que quieras usar.</p><ol><li>01 · Tu cuenta</li><li>02 · Tu marca</li><li>03 · Tus conexiones</li></ol><p class="journey-note">Tus datos y credenciales permanecen en esta instalación.</p></div>
+ <div class="journey-form"><h2>Hagámoslo tuyo</h2><p>Solo se crea una cuenta administradora inicial. Luego podrás invitar a tu equipo.</p><details><summary>¿Dónde encuentro mi código?</summary><p>En la carpeta de instalación, ejecuta:</p><code>docker compose exec app python manage.py avia_setup_code</code><p>El código dura 30 minutos y solo puede usarse una vez.</p></details><form method="post">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}<div class="journey-field">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="btn-brand" type="submit">Crear mi espacio →</button></form><p class="journey-note">La publicación y las conexiones externas no se activan al crear tu cuenta.</p></div>
+</section>
+{% endblock %}

@@ -31,3 +31,12 @@ La CI reproduce la selección de pruebas, migraciones, validación Compose, cons
 - Revisión visual del acceso en escritorio y ancho móvil de 390 px, sin desbordamiento horizontal; panel revisado con cuenta temporal local.
 - Manifiesto privado importado solo al montaje local ignorado. El repositorio público contiene un tema neutral y fuentes públicas con licencias OFL; no incluye el manifiesto ni recursos privados.
 - No existe un logo maestro aprobado en el catálogo consultado: se usa nombre tipográfico, sin inventar isotipo. No se verificó publicación social ni se modificó producción.
+
+## Onboarding autohospedado (2026-10-30)
+
+- Instalador `scripts/install.sh` ejecutado desde una copia limpia, con proyecto Docker y puerto aislados. Generó claves, construyó imagen, migró base vacía e inició app/worker; `/welcome/setup/` devolvió 200. Una segunda ejecución rechazó reinstalar y conservó el hash de `.env`.
+- Recorrido visual probado en un segundo Docker sin recursos privados: acceso con usuario ficticio, nombre/zona horaria, cuatro tarjetas de conexión, omitir conexiones y llegada al calendario. En móvil a 390 px no hubo desbordamiento horizontal. Entornos de prueba desechables; no se conectaron cuentas externas ni se publicaron contenidos.
+- Pruebas del onboarding cubren bootstrap de un uso, código vencido/incorrecto, CSRF, transporte seguro, concurrencia, permisos cruzados, secretos cifrados/no reflejados en HTML, adaptador Google y vínculo GitHub simulado. La configuración guardada no equivale a OAuth real validado.
+- Se conserva el estado del onboarding en PostgreSQL. La migración de instalaciones existentes cierra el bootstrap y mantiene marcas/usuarios.
+
+- Regresión final de esta entrega: **907 passed, 580 warnings**, 26.79 s. Incluye ensayo de migración `avia_brand/0002 → 0003` con marca y usuario existentes: preserva identificadores y contraseña, y cierra la reclamación inicial. No equivale a validar cualquier actualización futura.

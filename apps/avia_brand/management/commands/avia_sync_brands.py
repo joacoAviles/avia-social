@@ -1,14 +1,14 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.avia_brand.models import BrandSource
-from apps.avia_brand.services import REPOSITORIES, SyncError, sync
+from apps.avia_brand.services import SyncError, sync
 
 
 class Command(BaseCommand):
     help = "Read GitHub and create pending revisions. Never approves or publishes."
 
     def add_arguments(self, parser):
-        parser.add_argument("--repository", choices=list(REPOSITORIES))
+        parser.add_argument("--repository", help="Filter an already configured source")
 
     def handle(self, *args, **options):
         sources = BrandSource.objects.all()

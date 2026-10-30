@@ -87,4 +87,12 @@ def ui_brand(request):
     except (OperationalError, ProgrammingError):
         pass  # collectstatic / migrations before the schema exists
     values = tokens(identity or private_identity() or {})
-    return {"avia_ui_tokens": values, "avia_ui_configured": bool(values)}
+    from .models import InstallationSetup
+
+    google_configured = bool(settings.GOOGLE_AUTH_CLIENT_ID and settings.GOOGLE_AUTH_CLIENT_SECRET)
+    try:
+        state = InstallationSetup.objects.filter(pk=1).first()
+        google_configured = google_configured or bool(state and state.google_credentials)
+    except (OperationalError, ProgrammingError):
+        pass
+    return {"avia_ui_tokens": values, "avia_ui_configured": bool(values), "avia_google_configured": google_configured}

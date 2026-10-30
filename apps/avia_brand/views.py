@@ -76,7 +76,12 @@ def asset(request, workspace_id, revision_id, sha):
     if not item:
         return HttpResponse(status=404)
     try:
-        content = GitHubReader(source.repository).blob(sha)
+        reader = (
+            GitHubReader(source.repository, source.github_token)
+            if source.github_token
+            else GitHubReader(source.repository)
+        )
+        content = reader.blob(sha)
     except SyncError as exc:
         return HttpResponseBadRequest(str(exc))
     response = HttpResponse(content, content_type="application/octet-stream")
@@ -102,11 +107,11 @@ def webhook(request):
         payload = json.loads(request.body)
         delivery = uuid.UUID(request.headers.get("X-GitHub-Delivery", ""))
         repo = payload["repository"]["full_name"]
-        if payload.get("ref") != "refs/heads/main":
-            return HttpResponse(status=204)
     except (ValueError, KeyError, TypeError):
         return HttpResponseBadRequest("Invalid event")
     source = get_object_or_404(BrandSource, repository=repo)
+    if payload.get("ref") != "refs/heads/" + source.branch:
+        return HttpResponse(status=204)
     with transaction.atomic():
         receipt, created = HookReceipt.objects.get_or_create(delivery=delivery, defaults={"source": source})
         if created:
