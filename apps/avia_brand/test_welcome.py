@@ -195,7 +195,7 @@ def test_google_instance_configuration_and_adapter(session):
     assert app.client_id == "google-synthetic" and app.secret == "secret-synthetic"
     response = client.get(url + "?step=connections")
     assert response.status_code == 200 and b"secret-synthetic" not in response.content
-    assert b"Vincular Google" in response.content
+    assert b"Continuar con Google" in response.content
 
 
 def test_org_owner_cannot_change_global_google(session, owner):
@@ -346,15 +346,16 @@ def test_connection_screen_offers_journey_and_calendar(session):
 
 def test_guides_explain_repository_token_and_tiktok_https(session):
     client, ws, url = session
-    response = client.get(url + "?step=connections")
+    response = client.get(url + "?step=connections&configure=github")
     html = response.content.decode()
     assert response.status_code == 200
     assert "Only select repositories" in html
     assert "examples/brand-starter" in html
+    html = client.get(url + "?step=connections&configure=tiktok").content.decode()
     assert "Falta HTTPS para conectar TikTok" in html
     assert "Manage apps" in html
     assert "No copies tokens de usuario manualmente" in html
-    secure_html = client.get(url + "?step=connections", secure=True).content.decode()
+    secure_html = client.get(url + "?step=connections&configure=tiktok", secure=True).content.decode()
     assert "Falta HTTPS para conectar TikTok" not in secure_html
 
 
@@ -376,4 +377,22 @@ def test_instagram_direct_can_start_without_facebook(session):
     assert cards["instagram_login"]["configured"]
     assert not cards["facebook"]["configured"]
     assert "Conectar Instagram directo" in response.content.decode()
-    assert "Prepara Facebook" in response.content.decode()
+    assert "Habilitar Facebook" in response.content.decode()
+
+
+def test_connections_hide_admin_forms_and_offer_existing_oauth(session):
+    client, ws, url = session
+    PlatformCredential.objects.create(
+        organization=ws.organization,
+        platform="instagram_login",
+        credentials={"client_id": "synthetic", "client_secret": "synthetic"},
+    )
+    html = client.get(url + "?step=connections").content.decode()
+    assert 'name="client_secret"' not in html
+    assert 'name="token"' not in html
+    assert "Conectar Instagram directo" in html
+    assert reverse("social_accounts:connect", args=[ws.id]) in html
+    admin = client.get(url + "?step=connections&configure=instagram_login").content.decode()
+    assert 'name="client_secret"' in admin
+    assert "Prepara Instagram directo" in admin
+    assert "Prepara Facebook" not in admin

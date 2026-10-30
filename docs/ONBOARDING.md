@@ -97,3 +97,9 @@ El asistente incluye ambas tarjetas independientes. Puedes configurar y autoriza
 - **Facebook:** el administrador configura su aplicación y permisos de páginas, registra el callback mostrado y guarda App ID/App Secret. El usuario pulsa Conectar Facebook y autoriza las páginas que administra. No requiere conectar Instagram; no se ofrecen perfiles personales ni grupos.
 
 Usa cuentas/roles de prueba autorizados por Meta y completa sus requisitos de revisión para usuarios externos y permisos solicitados. Los formularios guardan credenciales cifradas por organización usando los adaptadores existentes. Las pruebas automatizadas comprueban que Instagram se configura independientemente de Facebook; no acreditan autorización ni publicación real ante Meta.
+
+## Conexión cotidiana y preparación administrativa
+
+La pantalla Tus conexiones muestra tarjetas y botones OAuth para los proveedores habilitados. Los formularios de claves, callbacks y guías ya no se muestran en esa pantalla. «Administrar conexión» o «Habilitar … · administrador» abre la preparación de un solo proveedor; su acceso exige rol owner/admin y permiso para gestionar cuentas. La preparación de Google exige además superusuario.
+
+Una vez guardadas las credenciales, vuelve a Tus conexiones y pulsa el botón del proveedor para iniciar sesión y consentir. Instagram directo funciona independientemente de Facebook. GitHub sigue siendo una fuente de marca opcional con token de lectura; no se anuncia OAuth GitHub ni Google Calendar, que no están implementados. Esta separación mejora el recorrido pero no elimina los requisitos del proveedor ni provisiona aplicaciones, dominios HTTPS o aprobaciones automáticamente.

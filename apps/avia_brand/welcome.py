@@ -138,6 +138,14 @@ def journey(request, workspace_id):
     if not membership.effective_permissions.get("manage_workspace_settings"):
         raise PermissionDenied
     workspace = membership.workspace
+    can_configure = bool(
+        request.org_membership
+        and request.org_membership.org_role in {"owner", "admin"}
+        and membership.effective_permissions.get("manage_social_accounts")
+    )
+    setup_provider = request.GET.get("configure", "")
+    if setup_provider and (not can_configure or (setup_provider == "google_login" and not request.user.is_superuser)):
+        raise PermissionDenied
     step = request.GET.get("step", "brand")
     if step not in {"brand", "connections", "ready"}:
         step = "brand"
@@ -221,6 +229,7 @@ def journey(request, workspace_id):
                     except (SyncError, IntegrityError):
                         error = "No se pudo vincular el repositorio. Revisa el nombre, el acceso de lectura y que no esté asignado a otra marca."
             step = "connections"
+            setup_provider = request.POST.get("platform", "github")
         elif action == "finish":
             WelcomeProgress.objects.update_or_create(workspace=workspace, defaults={"completed_at": timezone.now()})
             return redirect("calendar:calendar", workspace_id=workspace.id)
@@ -279,6 +288,8 @@ def journey(request, workspace_id):
         "avia_brand/welcome.html",
         {
             "step": step,
+            "can_configure": can_configure,
+            "setup_provider": setup_provider,
             "welcome_active": True,
             "form": form,
             "credential_form": credential_form,
