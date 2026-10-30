@@ -190,3 +190,86 @@ def test_outbox_signed_minimal_and_not_resent(data):
         expected = "sha256=" + hmac.new(b"fixture", payload, hashlib.sha256).hexdigest()
         assert post.call_args.kwargs["headers"]["X-Avia-Signature-256"] == expected
     assert OutboxEvent.objects.get().delivered_at is not None
+
+
+def test_brand_api_requires_permission_and_only_active_revision(data):
+    from apps.api_keys.services import issue_api_key
+    from apps.social_accounts.models import SocialAccount
+
+    owner, other, ws, src, rev = data
+    account = SocialAccount.objects.create(
+        workspace=ws,
+        platform="linkedin_personal",
+        account_platform_id="synthetic",
+        account_name="Fixture",
+        connection_status="connected",
+    )
+    key = issue_api_key(
+        workspace=ws,
+        social_accounts=[account],
+        issued_by=owner,
+        name="brand-test",
+        permissions=["manage_workspace_settings"],
+    )
+    c = Client()
+    headers = {"HTTP_AUTHORIZATION": "Bearer " + key.plaintext_token}
+    response = c.get("/api/v1/brand/", secure=True, **headers)
+    assert response.status_code == 200 and response.json()["identity"] is None
+    review(src, rev.id, owner, True)
+    response = c.get("/api/v1/brand/", secure=True, **headers)
+    assert response.json()["identity"]["brand"]["name"] == "Synthetic Brand"
+    assert response["Cache-Control"] == "private, no-store"
+    limited = issue_api_key(
+        workspace=ws, social_accounts=[account], issued_by=owner, name="limited", permissions=["create_posts"]
+    )
+    assert (
+        c.get("/api/v1/brand/", secure=True, HTTP_AUTHORIZATION="Bearer " + limited.plaintext_token).status_code == 403
+    )
+    membership = WorkspaceMembership.objects.get(user=owner, workspace=ws)
+    membership.workspace_role = "viewer"
+    membership.save()
+    assert c.get("/api/v1/brand/", secure=True, **headers).status_code == 403
+
+
+def test_bootstrap_is_idempotent(data):
+    from django.core.management import call_command
+
+    # Existing source is retained, other two created without downloading anything.
+    call_command("avia_bootstrap", email=data[0].email)
+    call_command("avia_bootstrap", email=data[0].email)
+    assert BrandSource.objects.count() == 3
+    assert BrandRevision.objects.count() == 1
+
+
+def test_reader_get_only_no_redirects(tmp_path):
+    token_dir = tmp_path / "tokens"
+    token_dir.mkdir()
+    (token_dir / "joaco-avia-brand.token").write_text("synthetic-token")
+    with (
+        override_settings(AVIA_GITHUB_TOKEN_DIR=str(token_dir)),
+        patch("apps.avia_brand.services.httpx.Client") as client,
+    ):
+        response = client.return_value.__enter__.return_value.stream.return_value.__enter__.return_value
+        response.status_code = 200
+        response.iter_bytes.return_value = [b'{"sha":"fixture"}']
+        reader = GitHubReader("joacoAviles/joaco-avia-brand")
+        assert reader.get("/commits/main") == {"sha": "fixture"}
+        assert client.call_args.kwargs["follow_redirects"] is False
+        stream = client.return_value.__enter__.return_value.stream
+        assert stream.call_args.args == (
+            "GET",
+            "https://api.github.com/repos/joacoAviles/joaco-avia-brand/commits/main",
+        )
+
+
+def test_approved_download_is_private(data):
+    owner, _, ws, src, rev = data
+    rev.catalog = [{"sha": "b" * 40, "path": "assets/test.png", "size": 7}]
+    rev.save()
+    review(src, rev.id, owner, True)
+    with patch("apps.avia_brand.views.GitHubReader") as reader:
+        reader.return_value.blob.return_value = b"fixture"
+        response = login(owner).get(reverse("avia_brand:asset", args=[ws.id, rev.id, "b" * 40]))
+    assert response.status_code == 200 and response.content == b"fixture"
+    assert response["Cache-Control"] == "private, no-store"
+    assert response["Content-Disposition"].startswith("attachment")

@@ -74,7 +74,7 @@ Para habilitar publicaciones, valide primero OAuth, cuenta de prueba, permisos, 
 
 ## API, webhooks y automatización
 
-Cree API keys desde Organization → API Keys con el mínimo alcance. `/api/v1/me/` permite verificar alcance; `/api/v1/brand/` exige `manage_workspace_settings` y devuelve solo la marca de la clave, con identidad aprobada. No inserte tokens en URLs ni archivos de workflow.
+Cree API keys desde Organization → API Keys con el mínimo alcance. La emisión heredada exige al menos una cuenta conectada en la allowlist y la API exige HTTPS para bearer; el arranque local HTTP sirve para la interfaz, no habilita automáticamente integraciones API externas. `/api/v1/me/` permite verificar alcance; `/api/v1/brand/` exige `manage_workspace_settings` y devuelve solo la marca de la clave, con identidad aprobada. No inserte tokens en URLs ni archivos de workflow.
 
 GitHub: configure `AVIA_GITHUB_WEBHOOK_SECRET` y `POST /brand-system/webhooks/github/` detrás de HTTPS. Se aceptan eventos push a main con firma SHA-256 y delivery UUID; solo registran `sync_requested`. Ejecute `avia_sync_brands` desde Rundeck para sincronización periódica. **El webhook no aprueba ni publica.**
 
@@ -93,9 +93,9 @@ Documentación: [auditoría y decisión de base](docs/UPSTREAM_AUDIT.md), [opera
 Las dependencias Python están fijadas en `requirements.lock`; frontend usa `npm ci`. Las imágenes tienen versiones explícitas, no `latest`; las actualizaciones de seguridad requieren revisar y regenerar el lock. No se promete reproducibilidad bit a bit de paquetes del sistema operativo.
 
 ```sh
-docker compose exec -e DJANGO_SETTINGS_MODULE=config.settings.test -e DB_HOST=postgres -e DB_USER=avia -e DB_PASSWORD="$POSTGRES_PASSWORD" app pytest apps/avia_brand
+sh scripts/test.sh
 ```
 
-Para pruebas use una instalación desechable y cargue `POSTGRES_PASSWORD` desde su `.env` en la sesión o use CI. No pruebe sobre una instalación productiva.
+Para pruebas use una instalación desechable o CI. El script obtiene la contraseña del entorno del contenedor sin imprimirla. No pruebe sobre una instalación productiva.
 
 Conserve [LICENSE](LICENSE), [NOTICE](NOTICE) y los avisos originales. La interfaz ofrece el código fuente; al desplegar cambios debe ofrecer el código correspondiente a la versión que ejecuta. Los activos privados de marca no están licenciados ni distribuidos como parte de este código. [README original](UPSTREAM_README.md), solo como referencia del upstream; para instalar AVIA prevalece este documento.
