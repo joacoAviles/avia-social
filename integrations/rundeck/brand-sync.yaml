@@ -1,0 +1,12 @@
+- name: AVIA Social - sync brand catalog
+  group: avia-social
+  description: Creates pending revisions only. Import disabled; configure a dedicated Docker-capable node.
+  executionEnabled: false
+  scheduleEnabled: false
+  loglevel: INFO
+  nodeFilterEditable: false
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+      - exec: docker compose --project-directory /opt/avia-social exec -T app python manage.py avia_sync_brands

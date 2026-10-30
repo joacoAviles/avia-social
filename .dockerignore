@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+!.env.example
+secrets
+private
+media
+test_media
+backups
+__pycache__
+.pytest_cache
+output
+.venv

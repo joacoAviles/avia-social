@@ -1,0 +1,12 @@
+AVIA Social 0.1 — derivative of BrightBean Studio
+Original source: https://github.com/brightbeanxyz/brightbean-studio
+Upstream snapshot: 1d11c52007a3f714979ff1b071d153e69a8c274a
+Original authors: BrightBean Studio contributors. Original notices retained.
+Modifications: AVIA Social contributors, 2026-10-30.
+Added AVIA Brand System, private revision approvals, signed events, safer local
+Compose packaging, release documentation and verification tests.
+Distributed under GNU Affero General Public License version 3 (LICENSE).
+No ownership of the BrightBean trademark is claimed; no endorsement is implied.
+Private brand identities/assets are runtime data, not distributed with this source.
+Operators must provide the corresponding source of their running modified version
+under AGPL section 13. Update the visible source link when modifying or deploying.

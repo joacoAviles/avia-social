@@ -1,0 +1,60 @@
+name: avia-social
+x-app: &app
+  build: .
+  image: avia-social:0.1
+  env_file: .env
+  environment:
+    DATABASE_URL: postgres://avia:${POSTGRES_PASSWORD}@postgres:5432/avia
+    DJANGO_SETTINGS_MODULE: config.settings.avia
+  init: true
+  security_opt: [no-new-privileges:true]
+  volumes:
+    - media:/app/media
+    - ./secrets:/run/secrets/avia:ro
+services:
+  postgres:
+    image: postgres:16.10-alpine
+    environment:
+      POSTGRES_DB: avia
+      POSTGRES_USER: avia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run python3 scripts/setup.py}
+    volumes: [database:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U avia -d avia]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    <<: *app
+    command: python manage.py migrate --noinput
+    depends_on:
+      postgres: {condition: service_healthy}
+  app:
+    <<: *app
+    ports: ["127.0.0.1:${AVIA_PORT:-8088}:8000"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, curl, -fsS, http://localhost:8000/health/]
+      interval: 15s
+      retries: 10
+    restart: unless-stopped
+  worker:
+    <<: *app
+    command: python manage.py run_studio_worker
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    restart: unless-stopped
+  n8n:
+    image: n8nio/n8n:1.114.4
+    profiles: [n8n]
+    ports: ["127.0.0.1:5688:5678"]
+    environment:
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_SECURE_COOKIE: "false"
+    volumes: [n8n:/home/node/.n8n]
+volumes:
+  database:
+  media:
+  n8n:
