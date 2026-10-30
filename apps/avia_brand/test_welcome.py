@@ -339,3 +339,17 @@ def test_connection_screen_offers_journey_and_calendar(session):
     assert "Abrir guía de configuración y continuar" in html
     assert reverse("calendar:calendar", args=[ws.id]) in html
     assert "Prepara tus conexiones" in html
+
+
+def test_guides_explain_repository_token_and_tiktok_https(session):
+    client, ws, url = session
+    response = client.get(url + "?step=connections")
+    html = response.content.decode()
+    assert response.status_code == 200
+    assert "Only select repositories" in html
+    assert "examples/brand-starter" in html
+    assert "Falta HTTPS para conectar TikTok" in html
+    assert "Manage apps" in html
+    assert "No copies tokens de usuario manualmente" in html
+    secure_html = client.get(url + "?step=connections", secure=True).content.decode()
+    assert "Falta HTTPS para conectar TikTok" not in secure_html

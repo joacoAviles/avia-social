@@ -1,0 +1,23 @@
+<section class="journey-guide">
+{% if card.platform == 'tiktok' %}
+<h3>1 · Prepara la aplicación (administrador)</h3>
+<ol>
+<li>Abre <a href="https://developers.tiktok.com/" target="_blank" rel="noopener noreferrer">TikTok for Developers</a>, inicia sesión y entra en Manage apps. Crea o selecciona tu aplicación.</li>
+<li>Configura su sitio web y la información solicitada por TikTok. Añade Login Kit para Web y los productos/permisos que vaya a usar tu aplicación; iniciar sesión no concede automáticamente permiso para publicar.</li>
+<li>En Login Kit registra la dirección de retorno que aparece debajo. Debe ser una dirección HTTPS de tu instalación y coincidir exactamente.</li>
+<li>En Credentials copia Client key y Client secret a este formulario. Guarda. Usa el entorno y las cuentas de prueba autorizadas por TikTok; para producción completa la revisión que solicite el proveedor.</li>
+</ol>
+{% if not request.is_secure %}<p class="journey-callout"><strong>Falta HTTPS para conectar TikTok.</strong> Esta página está abierta por HTTP. El túnel localhost permite configurar AVIA, pero TikTok exige una dirección de retorno HTTPS. Abre AVIA desde su dominio HTTPS antes de copiar la dirección de retorno y autorizar.</p>{% endif %}
+{% else %}
+<h3>1 · Prepara la aplicación (administrador)</h3>
+<ol>
+<li>Abre <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer">Google Cloud Console</a> y crea o selecciona un proyecto.</li>
+<li>En APIs &amp; Services → Library habilita YouTube Data API v3.</li>
+<li>Configura Google Auth Platform: Branding, Audience y Data Access. Si estás en modo de prueba, añade la cuenta que autorizarás como usuario de prueba.</li>
+<li>En Clients crea un cliente OAuth de tipo Web application. Añade la dirección de retorno de abajo en Authorized redirect URIs, exactamente como aparece.</li>
+<li>Copia Client ID y Client secret aquí y guarda. Completa la verificación que Google solicite para los permisos y el uso previsto.</li>
+</ol>
+{% endif %}
+<h3>2 · Conecta tu cuenta (usuario)</h3>
+<p>Después de guardar, pulsa «Conectar {{ card.title }}», inicia sesión en el proveedor, elige la cuenta y acepta los permisos. No copies tokens de usuario manualmente. Al regresar, revisa el nombre y el estado de la cuenta. Puedes repetir la autorización para añadir otra cuenta; no necesitas crear una aplicación nueva para cada cuenta.</p>
+</section>

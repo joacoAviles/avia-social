@@ -63,3 +63,28 @@ Las tres fuentes AVIA originales conservan compatibilidad con tokens montados en
 Al completar la configuración inicial, el panel abre normalmente. **Guía de inicio y conexiones**, al pie de la interfaz, permite volver al asistente. Estado del onboarding, cuentas y secretos cifrados viven en PostgreSQL y sobreviven a recrear contenedores. Conserve las claves de cifrado y los volúmenes según [UPGRADES.md](UPGRADES.md).
 
 El asistente no habilita `AVIA_PUBLISH_ENABLED` ni envía contenido. Autorizar cuentas puede activar las sincronizaciones heredadas. Antes de habilitar publicación, haga una prueba controlada por proveedor. Las pruebas automatizadas y la revisión visual del asistente no acreditan OAuth o publicación real en redes.
+
+## GitHub paso a paso
+
+**Dos repositorios distintos:** instala la aplicación clonando `https://github.com/joacoAviles/avia-social.git` (público, sin token). Para la identidad crea tu propio repositorio privado en [GitHub New repository](https://github.com/new). Copia [la plantilla mínima](../examples/brand-starter/brand/brand.yaml) a `brand/brand.yaml` y cambia `brand.name`. No clones los repositorios privados del mantenedor ni BrightBean para usar esta distribución.
+
+1. En GitHub: foto de perfil → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token.
+2. Pon nombre y caducidad; selecciona el Resource owner que contiene tu repositorio.
+3. En Repository access selecciona Only select repositories y únicamente el repositorio de marca.
+4. En Repository permissions: Contents → Read-only. Metadata de lectura viene incluido. No concedas escritura.
+5. Genera el token, espera aprobación de la organización si corresponde y pégalo solo en AVIA → GitHub → Token de lectura.
+6. En Repositorio escribe `propietario/nombre`. Pulsa Verificar y vincular, luego abre Catálogo y revisiones para sincronizar y aprobar.
+
+Si caduca el token, genera otro con el mismo alcance y usa Renovar acceso. Nunca lo añadas al repositorio o a una captura. [Referencia oficial de GitHub](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
+
+## TikTok: administrador una vez, usuario por cuenta
+
+El usuario debe poder pulsar **Conectar TikTok**, iniciar sesión y aceptar los permisos. No tiene que obtener un token manual. La instalación necesita antes una aplicación del proveedor: no distribuimos secretos de una aplicación compartida dentro del repositorio público.
+
+1. El administrador abre [TikTok for Developers](https://developers.tiktok.com/) → Manage apps y crea o selecciona una aplicación.
+2. Completa la información solicitada, añade Login Kit para Web y configura los productos/permisos necesarios para su uso. Login no equivale a permiso de publicación.
+3. Abre AVIA desde su dominio HTTPS. Copia la dirección de retorno mostrada en la guía y regístrala en Login Kit. TikTok exige HTTPS y coincidencia exacta; `http://localhost:8091` no satisface ese requisito.
+4. En Credentials copia Client key y Client secret al formulario AVIA y guarda. Usa las cuentas/entorno de prueba autorizados; completa la revisión del proveedor para producción.
+5. El usuario pulsa Conectar TikTok, inicia sesión, acepta y vuelve a AVIA. Verifica la cuenta y su estado; publicación real requiere validación independiente.
+
+[Requisitos oficiales de Login Kit web](https://developers.tiktok.com/docs/en/login-kit-web). Un servicio central de conexión podría reducir la configuración de cada instalación, pero sería otro servicio operado y aprobado, con disponibilidad y tratamiento de credenciales propios. No está implementado en esta versión.
