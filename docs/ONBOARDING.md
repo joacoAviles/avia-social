@@ -14,7 +14,7 @@ El instalador genera `.env` con claves aleatorias sin necesitar Python en el hos
 
 1. **Tu cuenta:** código, nombre, correo y contraseña del primer administrador.
 2. **Tu marca:** nombre y zona horaria. No se crean las tres marcas AVIA automáticamente.
-3. **Tus conexiones:** configurar y autorizar Google, YouTube y TikTok; opcionalmente vincular GitHub para identidad.
+3. **Tus conexiones:** configurar y autorizar Google Calendar, Instagram, Facebook, YouTube y TikTok; opcionalmente vincular GitHub para identidad.
 4. **Empieza a crear:** abrir el espacio o crear un borrador. Las conexiones pueden completarse después.
 
 El código solo se almacena como hash, se consume dentro de una transacción con bloqueo y no se incluye en URLs. Se cierra el bootstrap al crear el primer usuario. Ni eliminar ese usuario ni conservar el código permite reclamar de nuevo la instancia. Si ya hay usuarios, la migración cierra el bootstrap y preserva cuentas existentes.
@@ -30,15 +30,15 @@ Este comando solo emite códigos si no hay usuarios ni una reclamación previa. 
 
 En Windows sin WSL puede usar la instalación manual: `python scripts/setup.py`, `docker compose up -d --build --wait app worker` y `docker compose exec app python manage.py avia_setup_code`.
 
-## Google no es YouTube
+## Google Calendar no es YouTube
 
-- **Google:** inicio de sesión para una cuenta AVIA existente. Un superusuario registra el cliente OAuth global de la instancia desde el asistente. Se conservan las políticas de registro cerrado/invitaciones. Los secretos se guardan cifrados. También siguen disponibles `GOOGLE_AUTH_CLIENT_ID` / `GOOGLE_AUTH_CLIENT_SECRET` como configuración de entorno; la configuración guardada en el asistente tiene prioridad. No configure simultáneamente un SocialApp adicional para el mismo proveedor.
+- **Google Calendar:** consulta privada de calendarios y eventos mediante OAuth, con selección de calendario y agenda de próximos 30 días dentro de AVIA. Solo lectura; no crea ni modifica eventos. Cada usuario y espacio tienen su propia autorización. Un superusuario configura el cliente OAuth global de Calendar una vez. La conexión de YouTube y el antiguo inicio de sesión Google se conservan por separado.
 - **YouTube:** autorización independiente del canal para los adaptadores sociales. Credenciales por organización; permisos y revisión del proveedor siguen siendo necesarios.
 - **TikTok:** client key/secret por organización y autorización de la cuenta mediante el flujo OAuth/PKCE existente.
 
 Cada tarjeta muestra la dirección de retorno calculada desde el origen real de la petición. Configure primero el dominio/proxy/HTTPS si necesita callbacks públicos. Los formularios de secretos solo aceptan HTTPS o localhost; el proxy debe sanear cabeceras. El guardado de credenciales no comprueba que el proveedor las acepte: la tarjeta indica **Falta autorizar**. Una cuenta registrada muestra su estado guardado; no se presenta como prueba de publicación real.
 
-Los secretos nunca se rellenan nuevamente en HTML. El acceso de edición exige permisos de marca y rol owner/admin de organización; Google global exige además superusuario. Cambiar credenciales puede afectar cuentas ya autorizadas de esa organización.
+Los secretos nunca se rellenan nuevamente en HTML. El acceso de edición exige permisos de marca y rol owner/admin de organización; Calendar global exige además superusuario. Cambiar credenciales puede afectar cuentas ya autorizadas de esa organización.
 
 Guías de los proveedores: [Google OAuth web](https://developers.google.com/identity/protocols/oauth2/web-server), [YouTube OAuth](https://developers.google.com/youtube/v3/guides/auth/server-side-web-apps), [TikTok Login Kit](https://developers.tiktok.com/doc/login-kit-web/).
 
@@ -102,4 +102,23 @@ Usa cuentas/roles de prueba autorizados por Meta y completa sus requisitos de re
 
 La pantalla Tus conexiones muestra tarjetas y botones OAuth para los proveedores habilitados. Los formularios de claves, callbacks y guías ya no se muestran en esa pantalla. «Administrar conexión» o «Habilitar … · administrador» abre la preparación de un solo proveedor; su acceso exige rol owner/admin y permiso para gestionar cuentas. La preparación de Google exige además superusuario.
 
-Una vez guardadas las credenciales, vuelve a Tus conexiones y pulsa el botón del proveedor para iniciar sesión y consentir. Instagram directo funciona independientemente de Facebook. GitHub sigue siendo una fuente de marca opcional con token de lectura; no se anuncia OAuth GitHub ni Google Calendar, que no están implementados. Esta separación mejora el recorrido pero no elimina los requisitos del proveedor ni provisiona aplicaciones, dominios HTTPS o aprobaciones automáticamente.
+Una vez guardadas las credenciales, vuelve a Tus conexiones y pulsa el botón del proveedor para iniciar sesión y consentir. Instagram directo funciona independientemente de Facebook. GitHub sigue siendo una fuente de marca opcional con token de lectura; no se anuncia OAuth GitHub, que no está implementado. Esta separación mejora el recorrido pero no elimina los requisitos del proveedor ni provisiona aplicaciones, dominios HTTPS o aprobaciones automáticamente.
+
+
+## Configurar Calendar y resolver los bloqueos observados
+
+1. Selecciona el proyecto correcto en Google Cloud. Habilita Google Calendar API en APIs y servicios → Biblioteca.
+2. En Google Auth Platform → Audience (Público), añade como Test user el correo que usará Calendar si la aplicación está en Testing.
+3. En Clients (Clientes), crea un cliente web o añade la URI exacta mostrada por AVIA al cliente existente. No borres callbacks de YouTube. Calendar tiene su propio callback `/welcome/<workspace>/calendar/callback/`.
+4. Guarda Client ID/secret en Habilitar Calendar y vuelve a Conectar Google Calendar. Acepta ambos permisos de lectura y selecciona un calendario.
+5. Abre Mi Google Calendar desde el calendario de publicaciones. La agenda muestra hasta 100 eventos de los próximos 30 días, con aviso si hay más. La lista de calendarios permite continuar a otra página. Los eventos se consultan en Google y no se comparten con otros miembros de AVIA.
+
+Scopes: `calendar.calendarlist.readonly` y `calendar.events.readonly`. El flujo usa state de un solo uso ligado a sesión, usuario y espacio, expiración de diez minutos, PKCE S256, secretos cifrados y renovación del token. Desvincular elimina el permiso guardado en AVIA; la revocación en Google se gestiona en la cuenta Google.
+
+**403 access_denied / solo testers (YouTube o Calendar):** añade el correo exacto en Audience → Test users del proyecto cuyo Client ID coincide con el error. No cambies a producción para evitar el bloqueo. Los refresh tokens en Testing para estos scopes suelen caducar a los siete días. Verifica el uso en producción antes de depender de programación continua.
+
+**PROD01 con túnel SSH:** `localhost:8091` puede volver al servidor a través del túnel; mantén SSH abierto y usa el mismo navegador/puerto. La URI registrada debe coincidir exactamente. Para acceso estable configura HTTPS. TikTok exige HTTPS y no admite este callback HTTP.
+
+**GitHub / Deploy keys:** esa pantalla pertenece a Settings del repositorio. Para el token abre los ajustes personales: https://github.com/settings/personal-access-tokens/new. Selecciona el repositorio de marca y Contents: Read-only; no necesitas una llave SSH.
+
+Fuentes: [scopes Calendar](https://developers.google.com/workspace/calendar/api/auth), [OAuth web Google](https://developers.google.com/identity/protocols/oauth2/web-server).

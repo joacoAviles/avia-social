@@ -144,7 +144,9 @@ def journey(request, workspace_id):
         and membership.effective_permissions.get("manage_social_accounts")
     )
     setup_provider = request.GET.get("configure", "")
-    if setup_provider and (not can_configure or (setup_provider == "google_login" and not request.user.is_superuser)):
+    if setup_provider and (
+        not can_configure or (setup_provider in {"google_login", "google_calendar"} and not request.user.is_superuser)
+    ):
         raise PermissionDenied
     step = request.GET.get("step", "brand")
     if step not in {"brand", "connections", "ready"}:
@@ -174,17 +176,25 @@ def journey(request, workspace_id):
                 raise PermissionDenied
             if action == "credentials":
                 platform = request.POST.get("platform")
-                if platform not in {"youtube", "tiktok", "instagram_login", "facebook", "google_login"}:
+                if platform not in {
+                    "youtube",
+                    "tiktok",
+                    "instagram_login",
+                    "facebook",
+                    "google_login",
+                    "google_calendar",
+                }:
                     return HttpResponse(status=400)
-                if platform == "google_login" and not request.user.is_superuser:
+                if platform in {"google_login", "google_calendar"} and not request.user.is_superuser:
                     raise PermissionDenied
                 credential_form = CredentialForm(request.POST)
                 if credential_form.is_valid():
                     values = dict(credential_form.cleaned_data)
-                    if platform == "google_login":
+                    if platform in {"google_login", "google_calendar"}:
                         state, _ = InstallationSetup.objects.get_or_create(pk=1)
-                        state.google_credentials = values
-                        state.save(update_fields=["google_credentials"])
+                        field = "calendar_credentials" if platform == "google_calendar" else "google_credentials"
+                        setattr(state, field, values)
+                        state.save(update_fields=[field])
                     else:
                         if platform == "tiktok":
                             values["client_key"] = values.pop("client_id")
@@ -283,6 +293,9 @@ def journey(request, workspace_id):
     )
     from allauth.socialaccount.models import SocialAccount
 
+    from .google_calendar import callback_url
+    from .models import CalendarConnection
+
     return render(
         request,
         "avia_brand/welcome.html",
@@ -298,6 +311,9 @@ def journey(request, workspace_id):
             "workspace": workspace,
             "cards": cards,
             "google_configured": google_configured,
+            "calendar_configured": bool(state and state.calendar_credentials),
+            "calendar_connection": CalendarConnection.objects.filter(user=request.user, workspace=workspace).first(),
+            "calendar_callback": callback_url(request, workspace.id),
             "google_connected": SocialAccount.objects.filter(user=request.user, provider="google").exists(),
             "google_callback": request.build_absolute_uri("/accounts/google/login/callback/"),
             "github_source": BrandSource.objects.filter(workspace=workspace).first(),

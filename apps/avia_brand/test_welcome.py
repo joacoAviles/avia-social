@@ -195,7 +195,8 @@ def test_google_instance_configuration_and_adapter(session):
     assert app.client_id == "google-synthetic" and app.secret == "secret-synthetic"
     response = client.get(url + "?step=connections")
     assert response.status_code == 200 and b"secret-synthetic" not in response.content
-    assert b"Continuar con Google" in response.content
+    assert b"Google Calendar" in response.content
+    assert b"Continuar con Google" not in response.content
 
 
 def test_org_owner_cannot_change_global_google(session, owner):
@@ -308,7 +309,7 @@ def test_upgrade_preserves_existing_brand_and_closes_bootstrap():
     from django.db.migrations.executor import MigrationExecutor
 
     old_target = [("avia_brand", "0002_site_identity")]
-    new_target = [("avia_brand", "0003_installationsetup_brandsource_branch_and_more")]
+    new_target = [("avia_brand", "0004_installationsetup_calendar_credentials_and_more")]
     executor = MigrationExecutor(connection)
     old_target = [node for node in executor.loader.graph.leaf_nodes() if node[0] != "avia_brand"] + old_target
     executor.migrate(old_target)

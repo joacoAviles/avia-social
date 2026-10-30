@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="journey">
+<h1>Mi Google Calendar</h1><p>Agenda personal · próximos 30 días · solo lectura. Tus eventos no se comparten con otros miembros.</p>
+<div class="journey-actions"><a href="{% url 'calendar:calendar' workspace.id %}">← Calendario de publicaciones</a><a href="{% url 'welcome:journey' workspace.id %}?step=connections">Mis conexiones</a></div>
+{% if error %}<p class="alert-error" role="alert">{{ error }}</p>{% endif %}
+{% if configured %}<form method="post" action="{% url 'welcome:calendar_connect' workspace.id %}">{% csrf_token %}<button class="btn-secondary">{% if connection %}Volver a autorizar Google{% else %}Conectar Google Calendar{% endif %}</button></form>{% else %}<p>El administrador debe habilitar Google Calendar desde la guía de conexiones.</p>{% endif %}
+{% if connection %}
+<form method="post">{% csrf_token %}<label>Elige tu calendario<select name="calendar_id" required>{% for calendar in calendars %}<option value="{{ calendar.id }}" {% if calendar.id == connection.calendar_id %}selected{% endif %}>{{ calendar.summary }}</option>{% endfor %}</select></label><button class="btn-brand">Usar este calendario</button></form>
+{% if next_calendars %}<a href="?calendars_page={{ next_calendars|urlencode }}">Ver más calendarios</a>{% endif %}
+<h2>{{ connection.calendar_name|default:'Selecciona un calendario para ver sus eventos' }}</h2>
+{% for event in events %}<article class="journey-panel"><h3>{{ event.summary|default:'Sin título' }}</h3><p>{{ event.when }}</p>{% if event.location %}<p>{{ event.location }}</p>{% endif %}</article>{% empty %}{% if connection.calendar_id and not error %}<p>No hay eventos en los próximos 30 días.</p>{% endif %}{% endfor %}
+<form method="post" action="{% url 'welcome:calendar_disconnect' workspace.id %}">{% csrf_token %}<button class="btn-secondary">Desvincular Calendar de AVIA</button></form>
+{% endif %}
+</section>
+{% endblock %}

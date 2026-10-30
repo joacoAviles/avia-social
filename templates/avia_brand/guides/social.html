@@ -18,6 +18,12 @@
 <li>Copia Client ID y Client secret aquí y guarda. Completa la verificación que Google solicite para los permisos y el uso previsto.</li>
 </ol>
 {% endif %}
+{% if card.platform == 'youtube' %}
+<h3>Si Google bloquea el acceso</h3>
+<p><strong>403 access_denied con el mensaje «solo testers»:</strong> abre Google Auth Platform → Audience (Público) → Test users → Add users. Añade exactamente el correo con el que iniciaste sesión y guarda. Comprueba en Clients que el Client ID coincida con el del error: añadir el correo en otro proyecto no sirve. Vuelve a Conectar YouTube. No cambies a producción para evitar este paso.</p>
+<p>Esta conexión solicita youtube.upload, youtube.readonly y youtube.force-ssl; puede añadir yt-analytics.readonly si las estadísticas están habilitadas. En Testing, los refresh tokens para estos permisos normalmente vencen a los 7 días: prepara la verificación y el uso en producción antes de depender de publicaciones programadas.</p>
+<p><strong>Si usas PROD01 por un túnel SSH:</strong> el callback localhost puede volver al servidor a través del túnel. Mantén el túnel abierto y autoriza en el mismo navegador y puerto. No sustituyas la URI por otra distinta de la que muestra AVIA.</p>
+{% endif %}
 <h3>2 · Conecta tu cuenta (usuario)</h3>
 <p>Después de guardar, pulsa «Conectar {{ card.title }}», inicia sesión en el proveedor, elige la cuenta y acepta los permisos. No copies tokens de usuario manualmente. Al regresar, revisa el nombre y el estado de la cuenta. Puedes repetir la autorización para añadir otra cuenta; no necesitas crear una aplicación nueva para cada cuenta.</p>
 </section>

@@ -40,3 +40,11 @@ La CI reproduce la selección de pruebas, migraciones, validación Compose, cons
 - Se conserva el estado del onboarding en PostgreSQL. La migración de instalaciones existentes cierra el bootstrap y mantiene marcas/usuarios.
 
 - Regresión final de esta entrega: **907 passed, 580 warnings**, 26.79 s. Incluye ensayo de migración `avia_brand/0002 → 0003` con marca y usuario existentes: preserva identificadores y contraseña, y cierra la reclamación inicial. No equivale a validar cualquier actualización futura.
+
+## Calendar y correcciones de onboarding (2026-10-30)
+
+- Calendar usa OAuth independiente del antiguo login Google y de YouTube, permisos de lectura, PKCE y state de sesión de un solo uso con caducidad.
+- Pruebas simuladas: cifrado, aislamiento entre usuarios, selección/consulta, rechazo de scopes incompletos sin reemplazar permisos anteriores, callbacks expirados/repetidos, CSRF y configuración exclusiva de superusuario.
+- La agenda es personal, muestra próximos 30 días y limita la respuesta a 100 eventos con aviso. No crea/edita eventos ni mezcla automáticamente sus eventos con publicaciones.
+- GitHub: regresión para aprobar repositorios propios sin depender de la lista fija de marcas AVIA; el acceso a esa lista como valor predeterminado causaba KeyError aun con un nombre válido.
+- No se han realizado autorizaciones reales con Google ni cambios en PROD01 durante esta implementación. Tener credenciales guardadas no acredita autorización ni publicación.

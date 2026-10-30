@@ -69,8 +69,22 @@ class InstallationSetup(models.Model):
     expires_at = models.DateTimeField(null=True)
     claimed_at = models.DateTimeField(null=True)
     google_credentials = EncryptedJSONField(default=dict)
+    calendar_credentials = EncryptedJSONField(default=dict)
 
 
 class WelcomeProgress(models.Model):
     workspace = models.OneToOneField("workspaces.Workspace", on_delete=models.CASCADE)
     completed_at = models.DateTimeField(null=True)
+
+
+class CalendarConnection(models.Model):
+    """Private Google Calendar grant, scoped to a user and workspace."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    workspace = models.ForeignKey("workspaces.Workspace", on_delete=models.CASCADE)
+    tokens = EncryptedJSONField(default=dict)
+    calendar_id = models.CharField(max_length=1024, blank=True)
+    calendar_name = models.CharField(max_length=500, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "workspace"], name="avia_calendar_user_workspace")]

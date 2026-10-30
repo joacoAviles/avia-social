@@ -10,7 +10,7 @@
 <article>
 <h2>{{ revision.identity.brand.name }} · {{ revision.state }}</h2><code>{{ revision.commit }}</code>
 <p>{{ revision.created_at }}</p>
-<details><summary>Identidad y estilo de la versión</summary><pre style="white-space:pre-wrap">{{ revision.identity }}</pre></details>
+<details><summary>Ver identidad de esta versión</summary><dl><dt>Nombre de marca</dt><dd>{{ revision.identity.brand.name|default:'Sin nombre' }}</dd><dt>Formato</dt><dd>{{ revision.identity.schema_version|default:'No indicado' }}</dd></dl><h3>Colores</h3><ul>{% for name, color in revision.identity.visual.colors.values.items %}<li>{{ name }}: {{ color }}</li>{% empty %}<li>El manifiesto no incluye colores.</li>{% endfor %}</ul><p>Los archivos disponibles aparecen debajo. Aprobar activa esta identidad para el espacio; no publica recursos en redes.</p></details>
 <ul>{% for item in revision.catalog %}<li>{{ item.path }} · {{ item.size }} bytes {% if revision.state == 'approved' %}<a href="{% url 'avia_brand:asset' source.workspace_id revision.id item.sha %}">Descargar privado</a>{% endif %}</li>{% endfor %}</ul>
 {% if revision.state == 'pending' %}<form method="post" action="{% url 'avia_brand:review' source.workspace_id revision.id %}">{% csrf_token %}<button name="decision" value="approve">Aprobar</button> <button name="decision" value="reject">Rechazar</button></form>{% endif %}
 </article>{% empty %}<p>Sin revisiones. Configure el acceso GitHub de solo lectura y sincronice.</p>{% endfor %}

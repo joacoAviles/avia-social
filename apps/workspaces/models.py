@@ -51,7 +51,7 @@ class Workspace(models.Model):
                 from apps.avia_brand.services import REPOSITORIES
 
                 identity = source.active_revision.identity if source.active_revision_id else {}
-                self.name = identity.get("brand", {}).get("name", REPOSITORIES[source.repository])
+                self.name = identity.get("brand", {}).get("name", REPOSITORIES.get(source.repository, self.name))
                 colors = identity.get("visual", {}).get("colors", {}).get("values", {})
                 import re
 

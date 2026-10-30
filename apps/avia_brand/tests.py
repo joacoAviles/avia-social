@@ -273,3 +273,16 @@ def test_approved_download_is_private(data):
     assert response.status_code == 200 and response.content == b"fixture"
     assert response["Cache-Control"] == "private, no-store"
     assert response["Content-Disposition"].startswith("attachment")
+
+
+def test_approve_custom_repository_does_not_require_builtin_name(data):
+    owner, other, ws, source, revision = data
+    source.repository = "example/Avia-Brands"
+    source.save(update_fields=["repository"])
+    client = login(owner)
+    response = client.post(reverse("avia_brand:review", args=[ws.id, revision.id]), {"decision": "approve"})
+    assert response.status_code == 302
+    ws.refresh_from_db()
+    source.refresh_from_db()
+    assert ws.name == "Synthetic Brand"
+    assert source.active_revision_id == revision.id
