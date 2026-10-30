@@ -85,6 +85,20 @@ class CalendarConnection(models.Model):
     tokens = EncryptedJSONField(default=dict)
     calendar_id = models.CharField(max_length=1024, blank=True)
     calendar_name = models.CharField(max_length=500, blank=True)
+    managed = models.BooleanField(default=False)
+    creation_started = models.BooleanField(default=False)
+    last_synced_at = models.DateTimeField(null=True)
+    sync_error = models.CharField(max_length=500, blank=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["user", "workspace"], name="avia_calendar_user_workspace")]
+
+
+class CalendarMirror(models.Model):
+    connection = models.ForeignKey(CalendarConnection, on_delete=models.CASCADE, related_name="mirrors")
+    source_key = models.CharField(max_length=100)
+    event_id = models.CharField(max_length=64, default=uuid.uuid4)
+    fingerprint = models.CharField(max_length=64, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["connection", "source_key"], name="avia_calendar_mirror_source")]

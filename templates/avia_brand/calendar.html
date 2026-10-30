@@ -1,16 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="journey">
-<h1>Mi Google Calendar</h1><p>Agenda personal · próximos 30 días · solo lectura. Tus eventos no se comparten con otros miembros.</p>
-<div class="journey-actions"><a href="{% url 'calendar:calendar' workspace.id %}">← Calendario de publicaciones</a><a href="{% url 'welcome:journey' workspace.id %}?step=connections">Mis conexiones</a></div>
-{% if error %}<p class="alert-error" role="alert">{{ error }}</p>{% endif %}
+<h1>AVIA en tu Google Calendar</h1><p>Crea un calendario exclusivo de esta marca en tu cuenta Google. Verás allí las publicaciones con fecha y los eventos de AVIA junto a tus calendarios personales.</p>
+<div class="journey-actions"><a href="{% url 'calendar:calendar' workspace.id %}">← Editar publicaciones y eventos en AVIA</a><a href="{% url 'welcome:journey' workspace.id %}?step=connections">Mis conexiones</a></div>
+{% if connection.sync_error %}<p class="alert-error" role="alert">{{ connection.sync_error }}</p>{% endif %}
+{% if can_manage %}
 {% if configured %}<form method="post" action="{% url 'welcome:calendar_connect' workspace.id %}">{% csrf_token %}<button class="btn-secondary">{% if connection %}Volver a autorizar Google{% else %}Conectar Google Calendar{% endif %}</button></form>{% else %}<p>El administrador debe habilitar Google Calendar desde la guía de conexiones.</p>{% endif %}
-{% if connection %}
-<form method="post">{% csrf_token %}<label>Elige tu calendario<select name="calendar_id" required>{% for calendar in calendars %}<option value="{{ calendar.id }}" {% if calendar.id == connection.calendar_id %}selected{% endif %}>{{ calendar.summary }}</option>{% endfor %}</select></label><button class="btn-brand">Usar este calendario</button></form>
-{% if next_calendars %}<a href="?calendars_page={{ next_calendars|urlencode }}">Ver más calendarios</a>{% endif %}
-<h2>{{ connection.calendar_name|default:'Selecciona un calendario para ver sus eventos' }}</h2>
-{% for event in events %}<article class="journey-panel"><h3>{{ event.summary|default:'Sin título' }}</h3><p>{{ event.when }}</p>{% if event.location %}<p>{{ event.location }}</p>{% endif %}</article>{% empty %}{% if connection.calendar_id and not error %}<p>No hay eventos en los próximos 30 días.</p>{% endif %}{% endfor %}
-<form method="post" action="{% url 'welcome:calendar_disconnect' workspace.id %}">{% csrf_token %}<button class="btn-secondary">Desvincular Calendar de AVIA</button></form>
-{% endif %}
+{% if connection.managed %}
+<section class="journey-panel"><h2>✓ {{ connection.calendar_name }}</h2><p>Última sincronización: {{ connection.last_synced_at|default:'Pendiente' }}</p><p>AVIA envía los cambios aproximadamente cada 2 minutos mientras el worker está activo. Crear, editar o mover contenido en AVIA actualiza este calendario. Eliminarlo de AVIA retira su evento correspondiente.</p><a class="btn-brand" href="https://calendar.google.com/calendar/u/0/r" target="_blank" rel="noopener noreferrer">Abrir Google Calendar</a><p>En Google activa «{{ connection.calendar_name }}» en Mis calendarios para verlo junto al personal. No leemos tus eventos personales. Los cambios hechos directamente en Google no reprograman publicaciones de AVIA.</p><form method="post" action="{% url 'welcome:calendar_sync' workspace.id %}">{% csrf_token %}<button class="btn-secondary">Sincronizar ahora</button></form></section>
+{% elif connection.creation_started %}<p>La creación fue iniciada, pero no tenemos confirmación completa. Comprueba Google Calendar antes de volver a intentarlo para evitar duplicados.</p>
+{% elif can_create %}<form method="post" action="{% url 'welcome:calendar_create' workspace.id %}">{% csrf_token %}<p>Se creará «AVIA Social · {{ workspace.name }}» dentro de tu cuenta Google y se sincronizará el contenido con fecha de esta marca.</p><button class="btn-brand">Crear calendario AVIA y activar sincronización</button></form>
+{% elif connection %}<p>Vuelve a autorizar Google para permitir administrar únicamente calendarios creados por AVIA.</p>{% endif %}
+{% else %}<p>Un administrador de esta marca debe preparar la sincronización.</p>{% endif %}
+{% if connection %}<form method="post" action="{% url 'welcome:calendar_disconnect' workspace.id %}">{% csrf_token %}<button class="btn-secondary">Detener sincronización y desvincular</button></form><p>Desvincular conserva el calendario y sus eventos en Google.</p>{% endif %}
 </section>
 {% endblock %}

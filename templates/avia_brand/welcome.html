@@ -16,8 +16,8 @@
 {% if not setup_provider or setup_provider == "google_calendar" %}
 <article class="journey-card {% if calendar_connection %}journey-card-linked{% endif %}">
 <div class="journey-card-top"><span class="journey-provider">GC</span><span class="journey-status">{% if calendar_connection %}✓ Autorizado{% elif calendar_configured %}Listo para conectar{% else %}Pendiente de habilitar{% endif %}</span></div>
-<h2>Google Calendar</h2><p>Consulta tus eventos y elige tu calendario. No cambia tu forma de entrar a AVIA.</p>
-{% if calendar_connection %}<p>{{ calendar_connection.calendar_name|default:'Elige tu calendario' }}</p><a class="btn-brand" href="{% url 'welcome:calendar' workspace.id %}">Abrir mi agenda</a>
+<h2>Google Calendar</h2><p>Crea un calendario de AVIA en tu cuenta Google. Tus publicaciones y eventos aparecerán allí, junto a tus calendarios personales.</p>
+{% if calendar_connection %}<p>{{ calendar_connection.calendar_name|default:'Crea tu calendario AVIA' }}</p><a class="btn-brand" href="{% url 'welcome:calendar' workspace.id %}">Administrar calendario AVIA</a>
 {% elif calendar_configured %}<form method="post" action="{% url 'welcome:calendar_connect' workspace.id %}">{% csrf_token %}<button class="btn-brand" type="submit">Conectar Google Calendar</button></form>{% endif %}
 {% if setup_provider == 'google_calendar' %}{% include "avia_brand/guides/calendar.html" %}
 {% elif request.user.is_superuser %}<a class="btn-secondary" href="?step=connections&amp;configure=google_calendar">{% if calendar_configured %}Administrar conexión{% else %}Habilitar Calendar · administrador{% endif %}</a>{% elif not calendar_configured %}<p>El administrador debe habilitar Calendar.</p>{% endif %}

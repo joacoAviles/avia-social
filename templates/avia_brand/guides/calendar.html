@@ -4,12 +4,12 @@
 <li>Abre <a href="https://console.cloud.google.com/">Google Cloud</a>. Selecciona el proyecto de tu aplicación AVIA. Puedes usar el mismo proyecto de YouTube, sin borrar sus credenciales.</li>
 <li>En APIs y servicios → Biblioteca habilita <strong>Google Calendar API</strong>.</li>
 <li>En Google Auth Platform → Audience (Público), si estás en Testing, añade como Test user el correo con el que vas a conectar el calendario. Debe ser el proyecto del cliente OAuth que guardarás aquí.</li>
-<li>En Data Access configura los permisos de lectura de lista de calendarios y eventos: <code>calendar.calendarlist.readonly</code> y <code>calendar.events.readonly</code>.</li>
+<li>En Data Access configura el permiso <code>https://www.googleapis.com/auth/calendar.app.created</code>: permite crear y administrar calendarios exclusivos de AVIA, sin leer el calendario personal.</li>
 <li>En Clients (Clientes), crea un cliente de tipo Aplicación web o añade esta URI a tu cliente existente. Conserva las URI de YouTube y las demás conexiones.</li>
 </ol>
 <label>URI de redirección exacta de Calendar</label><code class="journey-callback">{{ calendar_callback }}</code>
 <p>Si usas el túnel a PROD01, mantén abierto SSH y completa el acceso en el mismo navegador usando el mismo puerto localhost. Para acceso permanente configura el dominio HTTPS de tu instalación.</p>
 <form method="post">{% csrf_token %}<input type="hidden" name="action" value="credentials"><input type="hidden" name="platform" value="google_calendar"><label>Client ID<input name="client_id" required maxlength="500" autocomplete="off"></label><label>Client secret<input type="password" name="client_secret" required maxlength="2000" autocomplete="new-password"></label><button class="btn-brand" type="submit">Guardar y volver a conexiones</button></form>
-<p>Después pulsa Conectar Google Calendar, acepta los permisos de lectura y selecciona el calendario. Los eventos serán visibles solo para tu usuario en este espacio. No creamos ni modificamos eventos en Google.</p>
+<p>Después pulsa Conectar Google Calendar, acepta el permiso y pulsa Crear calendario AVIA. Se creará un calendario secundario en tu cuenta Google para esta marca. AVIA creará, editará, moverá y retirará allí los eventos correspondientes a tus cambios en la aplicación. No lee tus calendarios personales ni importa sus eventos.</p>
 <p>Si Google muestra 403 access_denied y menciona testers, revisa Audience → Test users. Comprueba que el Client ID del error coincida con Clients en ese proyecto. No cambies a producción solo para saltar ese error. En Testing, los permisos offline pueden exigir reconectar después de 7 días.</p>
 </section>

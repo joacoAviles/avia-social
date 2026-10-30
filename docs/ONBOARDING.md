@@ -32,7 +32,7 @@ En Windows sin WSL puede usar la instalación manual: `python scripts/setup.py`,
 
 ## Google Calendar no es YouTube
 
-- **Google Calendar:** consulta privada de calendarios y eventos mediante OAuth, con selección de calendario y agenda de próximos 30 días dentro de AVIA. Solo lectura; no crea ni modifica eventos. Cada usuario y espacio tienen su propia autorización. Un superusuario configura el cliente OAuth global de Calendar una vez. La conexión de YouTube y el antiguo inicio de sesión Google se conservan por separado.
+- **Google Calendar:** crea un calendario secundario «AVIA Social · Nombre de marca» en tu cuenta Google. Sincroniza desde AVIA las publicaciones con fecha y los eventos personalizados: crear, editar, mover o eliminar contenido en AVIA actualiza ese calendario. No lee tu calendario personal. El usuario ve ambos calendarios juntos desde Google Calendar. La conexión de YouTube se conserva por separado.
 - **YouTube:** autorización independiente del canal para los adaptadores sociales. Credenciales por organización; permisos y revisión del proveedor siguen siendo necesarios.
 - **TikTok:** client key/secret por organización y autorización de la cuenta mediante el flujo OAuth/PKCE existente.
 
@@ -109,11 +109,16 @@ Una vez guardadas las credenciales, vuelve a Tus conexiones y pulsa el botón de
 
 1. Selecciona el proyecto correcto en Google Cloud. Habilita Google Calendar API en APIs y servicios → Biblioteca.
 2. En Google Auth Platform → Audience (Público), añade como Test user el correo que usará Calendar si la aplicación está en Testing.
-3. En Clients (Clientes), crea un cliente web o añade la URI exacta mostrada por AVIA al cliente existente. No borres callbacks de YouTube. Calendar tiene su propio callback `/welcome/<workspace>/calendar/callback/`.
-4. Guarda Client ID/secret en Habilitar Calendar y vuelve a Conectar Google Calendar. Acepta ambos permisos de lectura y selecciona un calendario.
-5. Abre Mi Google Calendar desde el calendario de publicaciones. La agenda muestra hasta 100 eventos de los próximos 30 días, con aviso si hay más. La lista de calendarios permite continuar a otra página. Los eventos se consultan en Google y no se comparten con otros miembros de AVIA.
+3. Configura el permiso `https://www.googleapis.com/auth/calendar.app.created`: permite crear y gestionar calendarios de esta aplicación sin acceso a calendarios personales.
+4. En Clients (Clientes), crea un cliente web o añade la URI exacta mostrada por AVIA al cliente existente. No borres callbacks de YouTube. Calendar tiene su propio callback `/welcome/<workspace>/calendar/callback/`.
+5. Guarda Client ID/secret en Habilitar Calendar. Pulsa Conectar Google Calendar y acepta el permiso. Después pulsa **Crear calendario AVIA y activar sincronización**.
+6. En tu Google Calendar, activa «AVIA Social · Nombre de marca» en Mis calendarios para verlo junto al personal. No se copia contenido al calendario principal.
 
-Scopes: `calendar.calendarlist.readonly` y `calendar.events.readonly`. El flujo usa state de un solo uso ligado a sesión, usuario y espacio, expiración de diez minutos, PKCE S256, secretos cifrados y renovación del token. Desvincular elimina el permiso guardado en AVIA; la revocación en Google se gestiona en la cuenta Google.
+El worker sincroniza aproximadamente cada 120 segundos; también hay un botón Sincronizar ahora. Solo se sincronizan los espacios que el usuario sigue autorizado a administrar. Cambiar una fecha en AVIA actualiza el evento correspondiente; los cambios hechos directamente en Google no reprograman publicaciones en AVIA. Las publicaciones sin fecha no tienen una posición en Google. Cada destino social con fecha tiene su propio evento, además de los borradores con fecha propuesta y los eventos personalizados. Las publicaciones se representan como bloques de 30 minutos.
+
+No se consulta CalendarList ni los eventos personales. La sincronización escribe únicamente en el ID de calendario creado por esta conexión. Los IDs de eventos son deterministas para evitar duplicados tras una respuesta perdida. Los eventos retirados conservan una referencia local para poder volver a crearlos con otro ID si se vuelven a programar. Un resultado incierto al crear un calendario detiene los reintentos automáticos y pide revisar Google antes de repetir. Desvincular detiene la sincronización y conserva el calendario remoto. No borres la base de datos o los identificadores de sincronización.
+
+La autorización antigua de solo lectura, si llegó a usarse, no se convierte en permiso de escritura: requiere nueva autorización y crear un calendario exclusivo. La migración deja `managed=false` por defecto para impedir escrituras en calendarios seleccionados anteriormente.
 
 **403 access_denied / solo testers (YouTube o Calendar):** añade el correo exacto en Audience → Test users del proyecto cuyo Client ID coincide con el error. No cambies a producción para evitar el bloqueo. Los refresh tokens en Testing para estos scopes suelen caducar a los siete días. Verifica el uso en producción antes de depender de programación continua.
 
@@ -121,4 +126,4 @@ Scopes: `calendar.calendarlist.readonly` y `calendar.events.readonly`. El flujo 
 
 **GitHub / Deploy keys:** esa pantalla pertenece a Settings del repositorio. Para el token abre los ajustes personales: https://github.com/settings/personal-access-tokens/new. Selecciona el repositorio de marca y Contents: Read-only; no necesitas una llave SSH.
 
-Fuentes: [scopes Calendar](https://developers.google.com/workspace/calendar/api/auth), [OAuth web Google](https://developers.google.com/identity/protocols/oauth2/web-server).
+Fuentes: [scopes Calendar](https://developers.google.com/workspace/calendar/api/auth), [creación de calendario secundario](https://developers.google.com/workspace/calendar/api/v3/reference/calendars/insert), [OAuth web Google](https://developers.google.com/identity/protocols/oauth2/web-server).

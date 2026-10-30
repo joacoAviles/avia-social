@@ -309,7 +309,7 @@ def test_upgrade_preserves_existing_brand_and_closes_bootstrap():
     from django.db.migrations.executor import MigrationExecutor
 
     old_target = [("avia_brand", "0002_site_identity")]
-    new_target = [("avia_brand", "0004_installationsetup_calendar_credentials_and_more")]
+    new_target = [("avia_brand", "0005_calendarconnection_creation_started_and_more")]
     executor = MigrationExecutor(connection)
     old_target = [node for node in executor.loader.graph.leaf_nodes() if node[0] != "avia_brand"] + old_target
     executor.migrate(old_target)

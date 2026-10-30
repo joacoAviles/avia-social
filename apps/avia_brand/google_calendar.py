@@ -1,12 +1,10 @@
-"""Google Calendar read-only connection. Grants are private to each workspace member."""
+"""Google Calendar dedicated AVIA calendar connection. Grants are private to each workspace member."""
 
 import base64
 import hashlib
 import secrets
 import time
-from datetime import timedelta
-from urllib.parse import quote, urlencode
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from urllib.parse import urlencode
 
 import httpx
 from django.contrib import messages
@@ -14,26 +12,23 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
-from django.utils.dateparse import parse_datetime
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_GET, require_http_methods, require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from apps.members.models import WorkspaceMembership
 
 from .models import CalendarConnection, InstallationSetup
 
-SCOPES = [
-    "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
-    "https://www.googleapis.com/auth/calendar.events.readonly",
-]
+SCOPES = ["https://www.googleapis.com/auth/calendar.app.created"]
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 API_URL = "https://www.googleapis.com/calendar/v3/"
 
 
 class CalendarError(Exception):
-    pass
+    def __init__(self, message, status=None):
+        super().__init__(message)
+        self.status = status
 
 
 def credentials():
@@ -69,7 +64,7 @@ def exchange(data):
         ) from exc
 
 
-def api(connection, path, params=None):
+def api(connection, path, params=None, *, method="GET", body=None):
     tokens = dict(connection.tokens)
     if tokens.get("expires_at", 0) < time.time() + 60:
         config = credentials()
@@ -81,14 +76,23 @@ def api(connection, path, params=None):
         connection.save(update_fields=["tokens"])
     try:
         with httpx.Client(timeout=20, trust_env=False) as client:
-            response = client.get(
-                API_URL + path, params=params, headers={"Authorization": "Bearer " + tokens["access_token"]}
+            response = client.request(
+                method,
+                API_URL + path,
+                params=params,
+                json=body,
+                headers={"Authorization": "Bearer " + tokens["access_token"]},
             )
         response.raise_for_status()
-        return response.json()
+        return {} if response.status_code == 204 else response.json()
+    except httpx.HTTPStatusError as exc:
+        raise CalendarError(
+            "Google rechazó la operación. Revisa los permisos o vuelve a conectar la misma cuenta.",
+            exc.response.status_code,
+        ) from exc
     except (httpx.HTTPError, ValueError, KeyError) as exc:
         raise CalendarError(
-            "No pudimos consultar Google Calendar. Comprueba que la API esté habilitada y vuelve a conectar si se revocaron los permisos."
+            "No pudimos completar la operación en el calendario AVIA. Comprueba que la API esté habilitada y vuelve a conectar si se revocaron los permisos."
         ) from exc
 
 
@@ -96,7 +100,9 @@ def api(connection, path, params=None):
 @require_POST
 @never_cache
 def connect(request, workspace_id):
-    member(request, workspace_id)
+    membership = member(request, workspace_id)
+    if not membership.effective_permissions.get("manage_workspace_settings"):
+        raise PermissionDenied
     config = credentials()
     if not config:
         messages.error(request, "El administrador debe habilitar Google Calendar primero.")
@@ -139,7 +145,9 @@ def connect(request, workspace_id):
 @never_cache
 @sensitive_post_parameters()
 def callback(request, workspace_id):
-    member(request, workspace_id)
+    membership = member(request, workspace_id)
+    if not membership.effective_permissions.get("manage_workspace_settings"):
+        raise PermissionDenied
     pending = request.session.pop("calendar_oauth", {})
     if (
         not pending
@@ -167,16 +175,18 @@ def callback(request, workspace_id):
             }
         )
         if not set(SCOPES).issubset(set(tokens.get("scope", "").split())):
-            raise CalendarError("Faltan permisos de lectura de Calendar. Vuelve a conectar aceptando ambos permisos.")
+            raise CalendarError("Falta el permiso para administrar calendarios creados por AVIA. Vuelve a conectar.")
         if not tokens.get("refresh_token"):
             raise CalendarError("Google no entregó permiso para mantener la conexión. Vuelve a autorizar Calendar.")
         tokens["expires_at"] = time.time() + int(tokens.get("expires_in", 3600))
         CalendarConnection.objects.update_or_create(
             user=request.user,
             workspace_id=workspace_id,
-            defaults={"tokens": tokens, "calendar_id": "", "calendar_name": ""},
+            defaults={"tokens": tokens},
         )
-        messages.success(request, "Google Calendar autorizado. Elige el calendario que quieres consultar.")
+        messages.success(
+            request, "Google autorizado. Crea tu calendario exclusivo de AVIA o sincroniza el que ya vinculaste."
+        )
     except CalendarError as exc:
         messages.error(request, str(exc))
     return redirect("welcome:calendar", workspace_id=workspace_id)
@@ -184,70 +194,92 @@ def callback(request, workspace_id):
 
 @login_required
 @never_cache
-@require_http_methods(["GET", "POST"])
+@require_GET
 def agenda(request, workspace_id):
     membership = member(request, workspace_id)
     connection = CalendarConnection.objects.filter(user=request.user, workspace_id=workspace_id).first()
-    calendars, events, error, listing = [], [], "", {}
-    try:
-        if connection:
-            page = request.GET.get("calendars_page", "")
-            listing = api(connection, "users/me/calendarList", {"maxResults": 100, "pageToken": page})
-            calendars = listing.get("items", [])
-            if request.method == "POST":
-                selected = next((item for item in calendars if item["id"] == request.POST.get("calendar_id")), None)
-                if not selected:
-                    raise CalendarError("Selecciona uno de los calendarios disponibles.")
-                connection.calendar_id = selected["id"]
-                connection.calendar_name = selected.get("summary", selected["id"])
-                connection.save(update_fields=["calendar_id", "calendar_name"])
-                return redirect("welcome:calendar", workspace_id=workspace_id)
-            if connection.calendar_id:
-                start = timezone.now()
-                result = api(
-                    connection,
-                    "calendars/" + quote(connection.calendar_id, safe="") + "/events",
-                    {
-                        "timeMin": start.isoformat(),
-                        "timeMax": (start + timedelta(days=30)).isoformat(),
-                        "singleEvents": "true",
-                        "orderBy": "startTime",
-                        "maxResults": 100,
-                    },
-                )
-                events = result.get("items", [])
-                try:
-                    display_zone = ZoneInfo(membership.workspace.timezone or "UTC")
-                except ZoneInfoNotFoundError:
-                    display_zone = ZoneInfo("UTC")
-                for event in events:
-                    start_value = event.get("start", {})
-                    if start_value.get("date"):
-                        event["when"] = start_value["date"] + " · Todo el día"
-                    else:
-                        parsed = parse_datetime(start_value.get("dateTime", ""))
-                        event["when"] = (
-                            parsed.astimezone(display_zone).strftime("%d/%m/%Y · %H:%M %Z")
-                            if parsed
-                            else "Horario no disponible"
-                        )
-                if result.get("nextPageToken"):
-                    messages.info(request, "Mostrando los primeros 100 eventos de los próximos 30 días.")
-    except CalendarError as exc:
-        error = str(exc)
     return render(
         request,
         "avia_brand/calendar.html",
         {
             "workspace": membership.workspace,
             "connection": connection,
-            "calendars": calendars,
-            "events": events,
-            "error": error,
             "configured": bool(credentials()),
-            "next_calendars": listing.get("nextPageToken", ""),
+            "can_manage": membership.effective_permissions.get("manage_workspace_settings"),
+            "can_create": bool(connection and set(SCOPES).issubset(set(connection.tokens.get("scope", "").split()))),
         },
     )
+
+
+@login_required
+@require_POST
+@never_cache
+def create_calendar(request, workspace_id):
+    from django.db import transaction
+
+    membership = member(request, workspace_id)
+    if not membership.effective_permissions.get("manage_workspace_settings"):
+        raise PermissionDenied
+    with transaction.atomic():
+        connection = get_object_or_404(
+            CalendarConnection.objects.select_for_update(), user=request.user, workspace_id=workspace_id
+        )
+        if connection.managed or connection.creation_started:
+            return redirect("welcome:calendar", workspace_id=workspace_id)
+        if not set(SCOPES).issubset(set(connection.tokens.get("scope", "").split())):
+            messages.error(request, "Vuelve a autorizar para crear el calendario exclusivo de AVIA.")
+            return redirect("welcome:calendar", workspace_id=workspace_id)
+        # Commit before the external creation: a timeout must never create duplicates on retry.
+        connection.creation_started = True
+        connection.save(update_fields=["creation_started"])
+    try:
+        name = "AVIA Social · " + membership.workspace.name
+        calendar = api(
+            connection,
+            "calendars",
+            method="POST",
+            body={
+                "summary": name,
+                "description": "Publicaciones y eventos gestionados desde AVIA Social.",
+                "timeZone": membership.workspace.timezone or "UTC",
+            },
+        )
+        if not calendar.get("id"):
+            raise CalendarError("Google no confirmó el calendario. Revisa Google Calendar antes de reintentar.")
+        connection.calendar_id = calendar["id"]
+        connection.calendar_name = name
+        connection.managed = True
+        connection.sync_error = ""
+        connection.save(update_fields=["calendar_id", "calendar_name", "managed", "sync_error"])
+        messages.success(
+            request, "Calendario AVIA creado en tu cuenta Google. La sincronización automática actualizará sus eventos."
+        )
+    except CalendarError as exc:
+        connection.sync_error = str(exc)
+        if exc.status in {400, 401, 403, 429}:
+            connection.creation_started = False
+        connection.save(update_fields=["sync_error", "creation_started"])
+        messages.error(request, str(exc))
+    return redirect("welcome:calendar", workspace_id=workspace_id)
+
+
+@login_required
+@require_POST
+@never_cache
+def synchronize(request, workspace_id):
+    from .calendar_sync import sync_connection
+
+    membership = member(request, workspace_id)
+    if not membership.effective_permissions.get("manage_workspace_settings"):
+        raise PermissionDenied
+    connection = get_object_or_404(CalendarConnection, user=request.user, workspace_id=workspace_id, managed=True)
+    try:
+        sync_connection(connection.pk)
+        messages.success(request, "Cambios de AVIA sincronizados con tu calendario Google.")
+    except CalendarError as exc:
+        CalendarConnection.objects.filter(pk=connection.pk).update(sync_error=str(exc)[:500])
+        messages.error(request, str(exc))
+    return redirect("welcome:calendar", workspace_id=workspace_id)
 
 
 @login_required
