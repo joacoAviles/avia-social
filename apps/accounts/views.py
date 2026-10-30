@@ -235,7 +235,7 @@ def accept_terms(request):
             request.user.tos_accepted_at = timezone.now()
             request.user.save(update_fields=["tos_accepted_at"])
             return redirect("/")
-        messages.error(request, "You must agree to the Terms of Service and Privacy Policy to continue.")
+        messages.error(request, "Confirme que leyó la información de esta instalación para continuar.")
 
     return render(request, "account/accept_terms.html")
 
