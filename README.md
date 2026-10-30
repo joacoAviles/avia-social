@@ -4,6 +4,14 @@ Gestión social autohospedada, derivada de [BrightBean Studio](https://github.co
 
 **Versión inicial para validación local. Ninguna red social se declara probada en vivo.** El envío real está desactivado por defecto. No incluye credenciales, logos, manifiestos ni documentos privados del AVIA Brand System.
 
+## Distribución autohospedada
+
+Cada persona u organización instala AVIA Social en su propio Docker y controla sus datos, usuarios, credenciales y respaldos. No necesita infraestructura del mantenedor ni acceso a los repositorios privados de AVIA para iniciar la aplicación con el tema neutral.
+
+Las conexiones sociales requieren las aplicaciones OAuth y permisos de cada instalación. Los repositorios privados de marca son una integración específica y opcional para iniciar el producto: el catálogo actual solo admite los tres repositorios AVIA indicados abajo; todavía no es un conector general para cualquier repositorio de marca.
+
+El objetivo de una versión estable es permitir instalación limpia y actualizaciones verificadas sin recrear datos ni conexiones. La versión 0.1 sigue en validación; consulte las condiciones de aceptación antes de usar cuentas reales.
+
 ## Instalación
 
 Requisitos: Git, Python 3 para generar configuración, Docker Engine/Desktop y Docker Compose v2. Reserve inicialmente 4 GB de RAM y 5 GB de disco; mida el consumo antes de alojar junto a otros servicios. Construcción inicial requiere internet.

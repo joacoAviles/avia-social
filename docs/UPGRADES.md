@@ -2,6 +2,12 @@
 
 Estado: procedimiento de operación para revisión; **no existe aún un actualizador automático validado ni un salto entre releases productivas ensayado**. Consulte [auditoría previa](PREINSTALL_AUDIT.md). No confunda instalación nueva con actualización.
 
+## Responsabilidades del proyecto y de cada instalación
+
+El mantenedor debe publicar releases identificables, cambios de configuración, migraciones, compatibilidad y pruebas de instalación/actualización/recuperación. Cada administrador conserva su configuración y credenciales, respalda sus datos y valida dominio/permisos de sus proveedores. Las actualizaciones del código no deben incorporar secretos del mantenedor ni reemplazar los de los usuarios.
+
+No existe un dominio central obligatorio: localhost sirve para validación; las funciones que necesitan callbacks públicos requieren HTTPS propio y autorización del proveedor. La identidad corporativa privada no debe ser un requisito de arranque del clon público.
+
 ## Inventario persistente
 
 Conservar nombre efectivo del proyecto Compose, contexto Docker, volúmenes PostgreSQL/media, `.env`, `secrets/`, archivos externos S3 si se usan y configuración de proxy/DNS. Si hay n8n, conservar también su volumen/clave; Rundeck tiene su propio respaldo. Conservar repositorios privados y su historia. Guardar secretos fuera de Git, cifrados y con recuperación probada.

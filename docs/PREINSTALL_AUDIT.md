@@ -49,7 +49,11 @@ No es necesario terminar todas las funciones futuras antes de instalar. Diseño,
 
 **Límites del ensayo:** misma versión de aplicación antes/después, datos ficticios y base pequeña. No demuestra una actualización entre dos esquemas diferentes, restauración de archivos/media, recuperación de secretos reales, recuperación en otro host/arquitectura, n8n/Rundeck, tiempos con datos reales, publicación OAuth ni recuperación después de un envío externo interrumpido. No se ha cerrado por tanto la aceptación integral.
 
-## Condiciones para instalar definitivamente
+## Condiciones para publicar una versión instalable estable
+
+AVIA Social se distribuye como proyecto libre autohospedado: cada administrador lo instala en su propio Docker. No se requiere un servidor o dominio del mantenedor para publicar el producto. Hay dos responsabilidades distintas: el proyecto debe demostrar instalación limpia, actualización y recuperación; cada operador debe configurar y validar su propio entorno antes de conectar cuentas reales.
+
+La falta de un destino del mantenedor no bloquea el desarrollo ni la distribución. Las condiciones de host, dominio, claves y proveedores de la tabla corresponden a cada instalación, no a una infraestructura central de AVIA.
 
 | Condición | Estado |
 |---|---|
