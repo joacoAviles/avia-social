@@ -1,11 +1,14 @@
 <section class="journey-guide">
+<div class="journey-callout"><strong>Primero comprueba qué flujo permite tu app de Meta.</strong><p>Si ves «Unified Login» y «Token de usuario del sistema (SUAT)», no uses el formulario del flujo anterior. Esta versión todavía no completa la selección de activos y el ciclo de tokens de Unified Login. El asistente rechazará esa modalidad sin cambiar las conexiones existentes.</p></div>
+{% if not request.is_secure %}<p class="journey-callout"><strong>Estás usando HTTP.</strong> La pantalla de Meta que compartiste exige una URL HTTPS. Configura el dominio HTTPS real de AVIA y abre el asistente desde él antes de copiar el callback. Registrar una URL distinta en Meta no cambia la que envía AVIA.</p>{% endif %}
+<p>Un portafolio comercial administra la propiedad de la app; no es una página de Facebook. Si Meta exige portafolio, selecciona el existente con control total o completa su aprobación. No crees otro para intentar evitar el requisito.</p>
 {% if card.platform == 'instagram_login' %}
 <h3>1 · Prepara Instagram directo</h3>
 <p>Necesitas una cuenta profesional de Instagram (empresa o creador). No necesitas una página de Facebook ni conectar otra red a AVIA.</p>
 <ol>
 <li>Si tu cuenta es personal, cambia a una cuenta profesional desde los ajustes de Instagram.</li>
 <li>El administrador entra en <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Meta for Developers → Mis aplicaciones</a> y crea o selecciona la aplicación. La cuenta de desarrollador de Meta es una configuración administrativa; no vincula una página de Facebook a tu Instagram.</li>
-<li>Configura Instagram API con Instagram Login, no la modalidad con Facebook Login. Completa la información y los permisos solicitados por Meta.</li>
+<li>Solo si Meta permite el flujo anterior, configura Instagram API con Instagram Login. Si indica que no está disponible para apps nuevas y exige Unified Login, este conector no es compatible con esa configuración; no pruebes intercambiando App IDs.</li>
 <li>Registra la dirección de retorno que mostramos debajo. Usa el dominio HTTPS de esta instalación.</li>
 <li>Copia el Instagram App ID y su secreto correspondiente a este formulario y guarda. No uses las credenciales de otra aplicación ni tokens copiados de Instagram.</li>
 </ol>
@@ -16,12 +19,13 @@
 <p>Conecta páginas sobre las que tienes permisos de administración. Esta opción no publica en perfiles personales ni ofrece conexión de grupos.</p>
 <ol>
 <li>El administrador abre <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Meta for Developers → Mis aplicaciones</a> y crea o selecciona la aplicación.</li>
-<li>Configura el inicio de sesión de Facebook y el acceso a páginas para las funciones que usarás. Completa la información solicitada por Meta.</li>
+<li>Configura el inicio de sesión de Facebook y el acceso a páginas para las funciones que usarás. El conector actual usa un token de usuario para descubrir páginas. Si usas Login for Business, copia su Configuration ID (config_id) al formulario. No selecciones SUAT para este flujo.</li>
 <li>Registra la dirección de retorno que aparece debajo en la configuración OAuth. Debe coincidir exactamente con tu instalación HTTPS.</li>
-<li>Copia el App ID y App Secret de esa aplicación aquí y guarda.</li>
+<li>Copia el App ID y App Secret desde Configuración de la app → Básica. El config_id pertenece a Login for Business → Configuraciones, y no es el App ID. Guarda aquí los tres valores cuando corresponda.</li>
 </ol>
 <h3>2 · Selecciona tus páginas</h3>
 <p>Pulsa «Conectar Facebook», inicia sesión y concede acceso a las páginas que quieras usar. Completa la selección que muestre el flujo y revisa las cuentas registradas al volver. No necesitas conectar Instagram primero.</p>
 {% endif %}
 <p class="journey-note">El administrador prepara la aplicación una vez; cada usuario autoriza su cuenta. Para pruebas usa cuentas y roles autorizados por Meta. Para usuarios externos, completa la revisión y los requisitos de acceso que Meta solicite para los permisos elegidos. Una autorización no confirma que todas las funciones de publicación o mensajes estén aprobadas.</p>
+<h3>Qué revisar antes de autorizar</h3><ol><li>Meta App ID, secreto y config_id deben pertenecer a la misma app y configuración.</li><li>La cuenta de prueba debe tener los roles y acceso a los activos requeridos. Revisa solicitudes pendientes del portafolio.</li><li>Publicar en páginas requiere permisos como pages_manage_posts; listar páginas, pages_show_list. No añadas permisos publicitarios solo porque la pantalla los ofrece.</li><li>La URL OAuth es para iniciar sesión. La URL de webhook es otra configuración: no pegues el callback OAuth en webhooks.</li><li>Una conexión guardada no acredita revisión de Meta, mensajes ni publicación real. Comprueba esas funciones por separado.</li></ol>
 </section>

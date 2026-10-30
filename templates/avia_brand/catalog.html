@@ -2,7 +2,7 @@
 {% block title %}Identidad · AVIA Social{% endblock %}
 {% block content %}
 <section class="avia-brand-panel">
-<h1>AVIA Brand System · {{ source.workspace.name }}</h1>
+<h1>AVIA Brand System · {{ source.workspace.name }}</h1><p><a href="{% url 'avia_brand:template_builder' source.workspace_id %}">Crear una plantilla de marca para GitHub</a></p>
 <p>Fuente privada: {{ source.repository }} · Los cambios requieren aprobación.</p>
 <p>Versión activa: {{ source.active_revision.commit|default:"Sin versión aprobada" }}</p>
 <form method="post" action="{% url 'avia_brand:sync' source.workspace_id %}">{% csrf_token %}<button type="submit">Sincronizar desde GitHub</button></form>

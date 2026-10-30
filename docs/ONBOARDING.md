@@ -127,3 +127,21 @@ La autorización antigua de solo lectura, si llegó a usarse, no se convierte en
 **GitHub / Deploy keys:** esa pantalla pertenece a Settings del repositorio. Para el token abre los ajustes personales: https://github.com/settings/personal-access-tokens/new. Selecciona el repositorio de marca y Contents: Read-only; no necesitas una llave SSH.
 
 Fuentes: [scopes Calendar](https://developers.google.com/workspace/calendar/api/auth), [creación de calendario secundario](https://developers.google.com/workspace/calendar/api/v3/reference/calendars/insert), [OAuth web Google](https://developers.google.com/identity/protocols/oauth2/web-server).
+
+## Creador de plantilla de marca
+
+En GitHub → Crear plantilla de marca puedes completar nombre, descripción, sitio, idioma/zona horaria, colores, tipografías, tono, audiencia y temas. Previsualiza el YAML o descarga el ZIP con rutas fijas: `brand/brand.yaml`, `brand/content-templates.yaml`, `assets/README.md`, README y `.gitignore`. No se guarda el formulario ni se escribe en GitHub. No incluye logos oficiales ni archivos de fuentes.
+
+Descomprime el paquete y sube las carpetas a la raíz de tu repositorio privado mediante Code → Add file → Upload files. Revisa cualquier archivo existente antes de reemplazarlo. Luego sincroniza y aprueba desde AVIA. Nombre y colores son los campos que la aplicación aplica al espacio; los demás quedan documentados en el catálogo, no se presentan como funciones automáticas del editor.
+
+## Meta: elegir un flujo compatible
+
+La pantalla aportada por el usuario muestra Unified Login y un token de usuario del sistema (SUAT). Esa configuración no es equivalente al Instagram Login anterior. El formulario ahora exige identificar el flujo y rechaza Unified Login/SUAT sin reemplazar credenciales previas. No se ha implementado ni probado su selección de activos o renovación de tokens. El acceso automático a la documentación de Meta devolvió 429 durante esta revisión; no se infiere compatibilidad por un formulario guardado.
+
+- Instagram directo: solo para aplicaciones que todavía permiten Instagram Login anterior. No se debe cambiar al azar el App ID para intentar usar una app Unified.
+- Facebook Pages: el flujo existente usa token de usuario y descubrimiento de páginas. El onboarding admite `config_id` opcional para Facebook Login for Business; el proveedor ya utiliza esa configuración en lugar de enviar scopes separados. App ID, secreto y Configuration ID deben ser de la misma aplicación/configuración.
+- Portafolio comercial: controla la propiedad de la app y no es una página de Facebook. Si Meta lo exige, utiliza el existente con acceso suficiente y resuelve solicitudes pendientes.
+- HTTPS: abre AVIA desde su dominio HTTPS y registra el callback exacto. No reemplaces solo la URL del portal mientras AVIA siga enviando localhost.
+- OAuth y webhooks tienen destinos distintos. No se realiza publicación, solicitud de revisión ni cambio de permisos en Meta desde este asistente.
+
+Pendiente para Unified Login: verificar contrato OAuth/activos con documentación accesible de Meta, implementar token SUAT y su validación/revocación, descubrir cuentas sin depender de `/me/accounts`, probar selección y almacenamiento, y realizar una prueba autorizada de extremo a extremo. No anunciar soporte hasta completar esas pruebas.

@@ -158,6 +158,7 @@ def test_provider_credentials_encrypted_not_echoed(session, platform, key):
         {
             "action": "credentials",
             "platform": platform,
+            "meta_flow": {"instagram_login": "instagram_legacy", "facebook": "facebook_user"}.get(platform, ""),
             "client_id": "synthetic-id",
             "client_secret": "synthetic-private-value",
         },
@@ -367,6 +368,7 @@ def test_instagram_direct_can_start_without_facebook(session):
         {
             "action": "credentials",
             "platform": "instagram_login",
+            "meta_flow": "instagram_legacy",
             "client_id": "synthetic-ig-id",
             "client_secret": "synthetic-ig-secret",
         },
@@ -397,3 +399,55 @@ def test_connections_hide_admin_forms_and_offer_existing_oauth(session):
     assert 'name="client_secret"' in admin
     assert "Prepara Instagram directo" in admin
     assert "Prepara Facebook" not in admin
+
+
+def test_meta_unified_refused_without_overwriting_existing(session):
+    client, ws, url = session
+    original = PlatformCredential.objects.create(
+        organization=ws.organization,
+        platform="instagram_login",
+        credentials={"client_id": "old", "client_secret": "old-secret"},
+    )
+    response = client.post(
+        url + "?step=connections&configure=instagram_login",
+        {
+            "action": "credentials",
+            "platform": "instagram_login",
+            "meta_flow": "unified_suat",
+            "client_id": "new",
+            "client_secret": "new-secret",
+        },
+        secure=True,
+    )
+    assert response.status_code == 200
+    assert "no admite Unified Login/SUAT" in response.content.decode()
+    original.refresh_from_db()
+    assert original.credentials["client_id"] == "old"
+
+
+def test_facebook_business_config_id_drives_login(session):
+    from urllib.parse import parse_qs, urlparse
+
+    from providers.facebook import FacebookProvider
+
+    client, ws, url = session
+    response = client.post(
+        url,
+        {
+            "action": "credentials",
+            "platform": "facebook",
+            "meta_flow": "facebook_user",
+            "config_id": "12345678",
+            "client_id": "app",
+            "client_secret": "secret",
+        },
+        secure=True,
+    )
+    assert response.status_code == 302
+    credential = PlatformCredential.objects.get(organization=ws.organization, platform="facebook")
+    query = parse_qs(
+        urlparse(FacebookProvider(credential.credentials).get_auth_url("https://example.test/callback/", "state")).query
+    )
+    assert query["config_id"] == ["12345678"]
+    assert "scope" not in query
+    assert query["response_type"] == ["code"]

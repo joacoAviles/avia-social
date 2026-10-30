@@ -57,6 +57,16 @@ class BrandForm(forms.Form):
 class CredentialForm(forms.Form):
     client_id = forms.CharField(label="Client ID / Client key", max_length=500)
     client_secret = forms.CharField(label="Client secret", widget=forms.PasswordInput, max_length=2000)
+    config_id = forms.RegexField(r"\A[0-9]{1,100}\Z", label="Configuration ID (config_id)", required=False)
+    meta_flow = forms.ChoiceField(
+        required=False,
+        choices=[
+            ("", "Selecciona el flujo"),
+            ("instagram_legacy", "Instagram Login anterior"),
+            ("facebook_user", "Facebook Pages · token de usuario"),
+            ("unified_suat", "Unified Login · token de usuario del sistema"),
+        ],
+    )
 
 
 class GitHubForm(forms.Form):
@@ -188,8 +198,21 @@ def journey(request, workspace_id):
                 if platform in {"google_login", "google_calendar"} and not request.user.is_superuser:
                     raise PermissionDenied
                 credential_form = CredentialForm(request.POST)
+                if platform in {"instagram_login", "facebook"}:
+                    credential_form.is_valid()
+                    flow = request.POST.get("meta_flow", "")
+                    expected = "instagram_legacy" if platform == "instagram_login" else "facebook_user"
+                    if flow != expected:
+                        credential_form.add_error(
+                            "meta_flow",
+                            "Esta versión no admite Unified Login/SUAT. No guardamos ni reemplazamos tus credenciales. Selecciona el flujo compatible solo si coincide con la configuración real de Meta.",
+                        )
                 if credential_form.is_valid():
                     values = dict(credential_form.cleaned_data)
+                    config_id = values.pop("config_id", "")
+                    values.pop("meta_flow", None)
+                    if platform == "facebook" and config_id:
+                        values["config_id"] = config_id
                     if platform in {"google_login", "google_calendar"}:
                         state, _ = InstallationSetup.objects.get_or_create(pk=1)
                         field = "calendar_credentials" if platform == "google_calendar" else "google_credentials"
@@ -274,9 +297,17 @@ def journey(request, workspace_id):
         ),
     ]:
         accounts = list(workspace.social_accounts.filter(platform=platform).values("account_name", "connection_status"))
+        stored_credential = PlatformCredential.objects.filter(
+            organization=workspace.organization, platform=platform
+        ).first()
         cards.append(
             {
                 "platform": platform,
+                "config_id": (
+                    stored_credential.credentials.get("config_id", "")
+                    if stored_credential and platform == "facebook"
+                    else ""
+                ),
                 "title": title,
                 "description": description,
                 "guide": guide,

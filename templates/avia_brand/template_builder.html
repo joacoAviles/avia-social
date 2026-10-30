@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="journey">
+<a href="{% url 'welcome:journey' workspace.id %}?step=connections&amp;configure=github">← Volver a GitHub</a>
+<h1>Crea la plantilla de tu marca</h1>
+<p>Completa los datos, revisa el resultado y descarga un ZIP listo para subir a tu repositorio. No cambia tu identidad activa ni escribe en GitHub.</p>
+<form method="post" class="journey-panel">{% csrf_token %}{{ form.non_field_errors }}
+{% for field in form %}<div class="journey-field">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}
+<div class="journey-actions"><button class="btn-secondary" name="action" value="preview">Previsualizar estructura</button><button class="btn-brand" name="action" value="download">Descargar plantilla ZIP</button></div>
+</form>
+{% if preview %}<section class="journey-panel"><h2>Así quedará brand/brand.yaml</h2><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ preview }}</pre></section>{% endif %}
+<section class="journey-panel"><h2>Qué incluye</h2><p>Identidad, dos colores, tipografías declaradas, tono, audiencia, temas de contenido, tres ejemplos de publicaciones, carpeta de recursos e instrucciones. Los ejemplos requieren revisión; no son publicaciones listas para enviar.</p><h2>Cómo subirlo</h2><ol><li>Descomprime el ZIP.</li><li>En GitHub abre tu repositorio privado → Code → Add file → Upload files.</li><li>Sube brand/ y assets/ a la raíz; debe existir brand/brand.yaml. Si hay archivos anteriores, revisa antes de reemplazarlos.</li><li>Confirma los cambios y vuelve a AVIA → Catálogo → Sincronizar → Revisar y aprobar.</li></ol><p>No se incluyen logos oficiales, archivos de tipografías ni claves. La aplicación actual usa nombre y colores; el resto queda organizado en el catálogo para su uso posterior.</p></section>
+</section>
+{% endblock %}
