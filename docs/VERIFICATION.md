@@ -15,3 +15,11 @@ Fecha: 2026-10-30. Entorno: Docker local/Colima ARM64, Python 3.12.12, PostgreSQ
 No verificado: OAuth ni publicación real en ninguna red; recepción/entrega contra proveedores sociales; servidor Rundeck; n8n activo; ChatbotX; TLS/dominio público; carga productiva; auditoría exhaustiva de dependencias o todos los módulos upstream. Las pruebas no demuestran permisos de Meta/Google ni entrega de publicaciones reales.
 
 La CI reproduce la selección de pruebas, migraciones, validación Compose, construcción y arranque. Consulte el resultado del commit actual en GitHub Actions; un archivo de workflow no equivale por sí solo a una ejecución exitosa.
+
+## Comprobación final
+
+- La selección completa pasó dentro de la imagen final: **783 passed, 83 warnings**, 25.60 s. Se corrigió `scripts/test.sh` para ejecutar fixtures en un contenedor de pruebas efímero con permisos de escritura y admitir Compose v2 como plugin o binario independiente; no cambia UID 10001 de app/worker.
+- Bootstrap y las tres páginas privadas se comprobaron contra PostgreSQL real con usuario sintético en una transacción revertida. No quedaron usuarios ni marcas sintéticos persistidos.
+- App/worker reiniciados; health volvió a HTTP 200.
+- La imagen no contiene `/app/.env` ni `/app/secrets`.
+- CI Linux del código de aplicación `73c7331` aprobada: https://github.com/joacoAviles/avia-social/actions/runs/41119259777
