@@ -1,0 +1,27 @@
+<section class="journey-guide">
+{% if card.platform == 'instagram_login' %}
+<h3>1 · Prepara Instagram directo</h3>
+<p>Necesitas una cuenta profesional de Instagram (empresa o creador). No necesitas una página de Facebook ni conectar otra red a AVIA.</p>
+<ol>
+<li>Si tu cuenta es personal, cambia a una cuenta profesional desde los ajustes de Instagram.</li>
+<li>El administrador entra en <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Meta for Developers → Mis aplicaciones</a> y crea o selecciona la aplicación. La cuenta de desarrollador de Meta es una configuración administrativa; no vincula una página de Facebook a tu Instagram.</li>
+<li>Configura Instagram API con Instagram Login, no la modalidad con Facebook Login. Completa la información y los permisos solicitados por Meta.</li>
+<li>Registra la dirección de retorno que mostramos debajo. Usa el dominio HTTPS de esta instalación.</li>
+<li>Copia el Instagram App ID y su secreto correspondiente a este formulario y guarda. No uses las credenciales de otra aplicación ni tokens copiados de Instagram.</li>
+</ol>
+<h3>2 · Conecta Instagram</h3>
+<p>Pulsa «Conectar Instagram directo», inicia sesión en Instagram y acepta los permisos. Al regresar revisa el nombre y el estado de la cuenta. No hace falta completar Facebook, Google ni GitHub primero.</p>
+{% else %}
+<h3>1 · Prepara Facebook</h3>
+<p>Conecta páginas sobre las que tienes permisos de administración. Esta opción no publica en perfiles personales ni ofrece conexión de grupos.</p>
+<ol>
+<li>El administrador abre <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Meta for Developers → Mis aplicaciones</a> y crea o selecciona la aplicación.</li>
+<li>Configura el inicio de sesión de Facebook y el acceso a páginas para las funciones que usarás. Completa la información solicitada por Meta.</li>
+<li>Registra la dirección de retorno que aparece debajo en la configuración OAuth. Debe coincidir exactamente con tu instalación HTTPS.</li>
+<li>Copia el App ID y App Secret de esa aplicación aquí y guarda.</li>
+</ol>
+<h3>2 · Selecciona tus páginas</h3>
+<p>Pulsa «Conectar Facebook», inicia sesión y concede acceso a las páginas que quieras usar. Completa la selección que muestre el flujo y revisa las cuentas registradas al volver. No necesitas conectar Instagram primero.</p>
+{% endif %}
+<p class="journey-note">El administrador prepara la aplicación una vez; cada usuario autoriza su cuenta. Para pruebas usa cuentas y roles autorizados por Meta. Para usuarios externos, completa la revisión y los requisitos de acceso que Meta solicite para los permisos elegidos. Una autorización no confirma que todas las funciones de publicación o mensajes estén aprobadas.</p>
+</section>

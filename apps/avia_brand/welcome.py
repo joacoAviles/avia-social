@@ -166,7 +166,7 @@ def journey(request, workspace_id):
                 raise PermissionDenied
             if action == "credentials":
                 platform = request.POST.get("platform")
-                if platform not in {"youtube", "tiktok", "google_login"}:
+                if platform not in {"youtube", "tiktok", "instagram_login", "facebook", "google_login"}:
                     return HttpResponse(status=400)
                 if platform == "google_login" and not request.user.is_superuser:
                     raise PermissionDenied
@@ -229,6 +229,18 @@ def journey(request, workspace_id):
     configured = _get_configured_platforms(workspace.organization_id)
     cards = []
     for platform, title, description, guide in [
+        (
+            "instagram_login",
+            "Instagram directo",
+            "Conecta una cuenta profesional de Instagram sin vincular Facebook.",
+            "https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/",
+        ),
+        (
+            "facebook",
+            "Facebook",
+            "Conecta las páginas que administras. No requiere conectar Instagram.",
+            "https://developers.facebook.com/docs/pages-api/getting-started/",
+        ),
         (
             "youtube",
             "YouTube",

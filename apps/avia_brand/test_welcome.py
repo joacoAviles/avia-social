@@ -147,7 +147,10 @@ def test_cross_workspace_and_viewer_forbidden(session):
     assert client.post(url, {"action": "brand", "name": "attack", "timezone": "UTC"}).status_code == 403
 
 
-@pytest.mark.parametrize("platform,key", [("youtube", "client_id"), ("tiktok", "client_key")])
+@pytest.mark.parametrize(
+    "platform,key",
+    [("youtube", "client_id"), ("tiktok", "client_key"), ("instagram_login", "client_id"), ("facebook", "client_id")],
+)
 def test_provider_credentials_encrypted_not_echoed(session, platform, key):
     client, ws, url = session
     response = client.post(
@@ -335,7 +338,7 @@ def test_connection_screen_offers_journey_and_calendar(session):
     response = client.get(reverse("social_accounts:connect", args=[ws.id]))
     assert response.status_code == 200
     html = response.content.decode()
-    assert f'{journey_url}?step=connections' in html
+    assert f"{journey_url}?step=connections" in html
     assert "Abrir guía de configuración y continuar" in html
     assert reverse("calendar:calendar", args=[ws.id]) in html
     assert "Prepara tus conexiones" in html
@@ -353,3 +356,24 @@ def test_guides_explain_repository_token_and_tiktok_https(session):
     assert "No copies tokens de usuario manualmente" in html
     secure_html = client.get(url + "?step=connections", secure=True).content.decode()
     assert "Falta HTTPS para conectar TikTok" not in secure_html
+
+
+def test_instagram_direct_can_start_without_facebook(session):
+    client, ws, url = session
+    client.post(
+        url,
+        {
+            "action": "credentials",
+            "platform": "instagram_login",
+            "client_id": "synthetic-ig-id",
+            "client_secret": "synthetic-ig-secret",
+        },
+        HTTP_HOST="localhost",
+    )
+    assert not PlatformCredential.objects.filter(organization=ws.organization, platform="facebook").exists()
+    response = client.get(url + "?step=connections")
+    cards = {card["platform"]: card for card in response.context["cards"]}
+    assert cards["instagram_login"]["configured"]
+    assert not cards["facebook"]["configured"]
+    assert "Conectar Instagram directo" in response.content.decode()
+    assert "Prepara Facebook" in response.content.decode()

@@ -88,3 +88,12 @@ El usuario debe poder pulsar **Conectar TikTok**, iniciar sesión y aceptar los 
 5. El usuario pulsa Conectar TikTok, inicia sesión, acepta y vuelve a AVIA. Verifica la cuenta y su estado; publicación real requiere validación independiente.
 
 [Requisitos oficiales de Login Kit web](https://developers.tiktok.com/docs/en/login-kit-web). Un servicio central de conexión podría reducir la configuración de cada instalación, pero sería otro servicio operado y aprobado, con disponibilidad y tratamiento de credenciales propios. No está implementado en esta versión.
+
+## Instagram directo y Facebook
+
+El asistente incluye ambas tarjetas independientes. Puedes configurar y autorizar Instagram directo sin completar Facebook, Google, TikTok o GitHub.
+
+- **Instagram directo:** cuenta profesional (empresa o creador). El administrador configura Instagram API con Instagram Login en Meta for Developers y registra el callback HTTPS mostrado por AVIA. Guarda el Instagram App ID y su secreto correspondiente; el usuario pulsa Conectar Instagram directo e inicia sesión en Instagram. No requiere página de Facebook vinculada. La cuenta administrativa de Meta para registrar la aplicación es un requisito distinto de conectar una red a AVIA.
+- **Facebook:** el administrador configura su aplicación y permisos de páginas, registra el callback mostrado y guarda App ID/App Secret. El usuario pulsa Conectar Facebook y autoriza las páginas que administra. No requiere conectar Instagram; no se ofrecen perfiles personales ni grupos.
+
+Usa cuentas/roles de prueba autorizados por Meta y completa sus requisitos de revisión para usuarios externos y permisos solicitados. Los formularios guardan credenciales cifradas por organización usando los adaptadores existentes. Las pruebas automatizadas comprueban que Instagram se configura independientemente de Facebook; no acreditan autorización ni publicación real ante Meta.
