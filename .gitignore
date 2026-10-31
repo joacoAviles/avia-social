@@ -227,3 +227,5 @@ backups/
 !.env.example
 
 test-results.txt
+
+.cloudflare/

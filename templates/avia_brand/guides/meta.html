@@ -1,6 +1,6 @@
 <section class="journey-guide">
 <div class="journey-callout"><strong>Primero comprueba qué flujo permite tu app de Meta.</strong><p>Si ves «Unified Login» y «Token de usuario del sistema (SUAT)», no uses el formulario del flujo anterior. Esta versión todavía no completa la selección de activos y el ciclo de tokens de Unified Login. El asistente rechazará esa modalidad sin cambiar las conexiones existentes.</p></div>
-{% if not request.is_secure %}<p class="journey-callout"><strong>Estás usando HTTP.</strong> La pantalla de Meta que compartiste exige una URL HTTPS. Configura el dominio HTTPS real de AVIA y abre el asistente desde él antes de copiar el callback. Registrar una URL distinta en Meta no cambia la que envía AVIA.</p>{% endif %}
+{% if not request.is_secure %}<p class="journey-callout"><strong>Estás usando HTTP.</strong> La pantalla de Meta que compartiste exige una URL HTTPS. Configura el dominio HTTPS real de AVIA y abre el asistente desde él antes de copiar el callback. Registrar una URL distinta en Meta no cambia la que envía AVIA. Abre «Dominio HTTPS con Cloudflare» en esta guía para prepararlo.</p>{% endif %}
 <p>Un portafolio comercial administra la propiedad de la app; no es una página de Facebook. Si Meta exige portafolio, selecciona el existente con control total o completa su aprobación. No crees otro para intentar evitar el requisito.</p>
 {% if card.platform == 'instagram_login' %}
 <h3>1 · Prepara Instagram directo</h3>

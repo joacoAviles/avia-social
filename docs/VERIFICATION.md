@@ -49,3 +49,7 @@ La CI reproduce la selección de pruebas, migraciones, validación Compose, cons
 - Sincronización AVIA → Google cada 120 segundos con el worker; no hay edición bidireccional. Las operaciones reales con Google requieren validación autorizada por el usuario.
 - GitHub: regresión para aprobar repositorios propios sin depender de la lista fija de marcas AVIA; el acceso a esa lista como valor predeterminado causaba KeyError aun con un nombre válido.
 - No se han realizado autorizaciones reales con Google ni cambios en PROD01 durante esta implementación. Tener credenciales guardadas no acredita autorización ni publicación.
+
+## Módulo Cloudflare Tunnel
+
+45 pruebas de configuración y onboarding aprobadas; configuración Compose validada con y sin perfil cloudflare. Imagen cloudflared 2026.10.6 descargada y ejecutada para comprobar versión y soporte token-file, fijada por digest. Ajustes reales de HTTPS comprobados: cookies seguras, origen CSRF y redirección al hostname público. Sin túnel externo ni OAuth Meta probado en vivo; requiere dominio y token del propietario.

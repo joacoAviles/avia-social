@@ -35,6 +35,10 @@ curl -fsS http://localhost:8088/health/
 
 PostgreSQL no publica puertos. La interfaz solo escucha en loopback. Los datos sobreviven a `docker compose down`; **no use `down -v` si quiere conservarlos**. El trabajador realiza las tareas internas heredadas; no conecte cuentas reales hasta revisar sus tareas de sincronización y permisos.
 
+## Dominio HTTPS para Meta y otras conexiones
+
+Incluye un módulo opcional de **Cloudflare Tunnel** para usar `social.tudominio.cl` en tu propia instalación. [Configurar dominio, túnel y retornos OAuth paso a paso](docs/CLOUDFLARE.md). Conserva usuarios, datos y credenciales.
+
 ## Actualizaciones e instalación definitiva
 
 Antes de conectar cuentas reales, revise la [auditoría previa a instalación](docs/PREINSTALL_AUDIT.md) y el [procedimiento de actualización](docs/UPGRADES.md). Los datos son persistentes, pero todavía falta validar respaldo integral, actualización entre releases y recuperación en el destino definitivo.

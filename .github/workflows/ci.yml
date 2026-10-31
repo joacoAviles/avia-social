@@ -34,12 +34,13 @@ jobs:
           python-version: '3.12'
           cache: pip
       - run: pip install -r requirements.lock
-      - run: ruff check apps/avia_brand config/settings/avia.py config/settings/avia_test.py scripts/setup.py
-      - run: ruff format --check apps/avia_brand config/settings/avia.py config/settings/avia_test.py scripts/setup.py
+      - run: ruff check apps/avia_brand config/settings/avia.py config/settings/avia_test.py scripts/setup.py scripts/cloudflare_setup.py
+      - run: ruff format --check apps/avia_brand config/settings/avia.py config/settings/avia_test.py scripts/setup.py scripts/cloudflare_setup.py
       - run: python manage.py makemigrations --check --dry-run
       - run: pytest apps/avia_brand apps/accounts apps/common/tests/test_review_banner.py tests/test_oauth_pkce.py apps/members apps/composer apps/calendar apps/approvals apps/api apps/publisher tests/test_media_routing.py
       - run: python3 scripts/setup.py
       - run: docker compose config --quiet
+      - run: docker compose --profile cloudflare config --quiet
       - run: docker compose build app
       - run: docker compose up -d --wait app worker
       - run: curl --retry 10 --retry-delay 3 --retry-connrefused -f http://localhost:8088/health/

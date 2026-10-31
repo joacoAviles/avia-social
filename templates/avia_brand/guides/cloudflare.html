@@ -1,0 +1,14 @@
+<details class="journey-card">
+<summary>Dominio HTTPS con Cloudflare · configuración inicial</summary>
+<p>Para registrar el retorno en Meta necesitas una dirección pública estable, como <strong>https://social.tudominio.cl</strong>. Cada instalación usa su propio dominio y cuenta de Cloudflare.</p>
+<ol>
+<li>Añade tu dominio a Cloudflare y completa su activación. En <a href="https://one.dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare One</a>, abre Networks → Tunnels (o Connectors) y crea un túnel Cloudflared llamado «AVIA Social». Elige Docker.</li>
+<li>Copia únicamente el token mostrado después de <code>--token</code>. No lo pegues en este chat ni en GitHub.</li>
+<li>En Published application routes, elige tu subdominio «social», tu dominio y servicio <strong>HTTP → app:8000</strong>. Deja HTTP Host Header sin modificar. Activa Always Use HTTPS para ese hostname y no apliques caché a las páginas de AVIA.</li>
+<li>En el servidor, dentro de la carpeta avia-social, ejecuta <code>python3 scripts/cloudflare_setup.py</code>. Introduce tu dominio y el token cuando lo pida. Después ejecuta <code>docker compose up -d --build --wait app worker cloudflared</code>.</li>
+<li>Abre el dominio HTTPS, inicia sesión y vuelve a esta guía. Copia la dirección de retorno de cada proveedor en Meta o Google. Conserva las credenciales existentes; no reinstales ni elimines los volúmenes.</li>
+</ol>
+<p>El asistente prepara la instalación; no crea el dominio ni los registros de Cloudflare automáticamente. El túnel resuelve la dirección HTTPS, pero no sustituye los permisos y la revisión de Meta ni añade soporte para Unified Login.</p>
+<p>{% if request.is_secure %}Esta página se está sirviendo por HTTPS. Comprueba que el hostname sea tu dominio definitivo.{% else %}Esta página todavía usa HTTP. Termina la configuración y entra por tu dominio antes de iniciar la autorización.{% endif %}</p>
+<a href="https://github.com/joacoAviles/avia-social/blob/main/docs/CLOUDFLARE.md" target="_blank" rel="noopener noreferrer">Ver guía, diagnóstico y recuperación ↗</a>
+</details>

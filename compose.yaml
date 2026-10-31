@@ -45,6 +45,24 @@ services:
     depends_on:
       migrate: {condition: service_completed_successfully}
     restart: unless-stopped
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.6@sha256:004d843fa5fdc3103983fd580ee19fab4a8fa98add31f87249c1659e848c98e0
+    profiles: [cloudflare]
+    command: [tunnel, --no-autoupdate, --loglevel, warn, run, --token-file, /run/tunnel.token]
+    user: "${AVIA_TUNNEL_UID:-65532}:${AVIA_TUNNEL_GID:-65532}"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - type: bind
+        source: ./.cloudflare/tunnel.token
+        target: /run/tunnel.token
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      app: {condition: service_healthy}
+    restart: unless-stopped
   n8n:
     image: n8nio/n8n:1.114.4
     profiles: [n8n]
