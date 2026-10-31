@@ -1,6 +1,8 @@
 import pytest
 from django.test import override_settings
 
+pytestmark = pytest.mark.django_db
+
 
 @pytest.mark.parametrize("url,title", [("/terms/", "Términos de servicio"), ("/privacy/", "Política de privacidad")])
 @override_settings(AVIA_LEGAL_OPERATOR="Mi Empresa", AVIA_LEGAL_CONTACT_EMAIL="privacy@example.com")
