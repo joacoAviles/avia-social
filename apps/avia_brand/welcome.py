@@ -296,7 +296,11 @@ def journey(request, workspace_id):
             "https://developers.tiktok.com/doc/login-kit-web/",
         ),
     ]:
-        accounts = list(workspace.social_accounts.filter(platform=platform).values("account_name", "connection_status"))
+        accounts = list(
+            workspace.social_accounts.filter(platform=platform).values(
+                "account_name", "account_handle", "account_platform_id", "connection_status"
+            )
+        )
         stored_credential = PlatformCredential.objects.filter(
             organization=workspace.organization, platform=platform
         ).first()
@@ -313,6 +317,7 @@ def journey(request, workspace_id):
                 "guide": guide,
                 "configured": platform in configured,
                 "accounts": accounts,
+                "needs_attention": any(a["connection_status"] != "connected" for a in accounts),
                 "callback": request.build_absolute_uri(
                     reverse("social_accounts:oauth_callback", kwargs={"platform": to_url_slug(platform)})
                 ),
@@ -341,10 +346,13 @@ def journey(request, workspace_id):
             "error": error,
             "workspace": workspace,
             "cards": cards,
+            "has_social_accounts": any(card["accounts"] for card in cards),
+            "has_available_channels": any(not card["accounts"] for card in cards),
             "google_configured": google_configured,
             "calendar_configured": bool(state and state.calendar_credentials),
             "calendar_connection": CalendarConnection.objects.filter(user=request.user, workspace=workspace).first(),
             "calendar_callback": callback_url(request, workspace.id),
+            "public_origin": request.build_absolute_uri("/").rstrip("/"),
             "google_connected": SocialAccount.objects.filter(user=request.user, provider="google").exists(),
             "google_callback": request.build_absolute_uri("/accounts/google/login/callback/"),
             "github_source": BrandSource.objects.filter(workspace=workspace).first(),

@@ -164,3 +164,15 @@ En el formulario de la plataforma utiliza tu dominio HTTPS definitivo:
 - Instrucciones de eliminación, cuando se soliciten: `https://social.tudominio.cl/privacy/#eliminacion` (es una página de instrucciones, no un callback automático).
 
 Comprueba ambos enlaces en una ventana privada, sin sesión ni pantalla Cloudflare Access. Tener los archivos en GitHub no publica automáticamente las páginas en tu servidor ni acredita aprobación de la plataforma.
+
+## Recorrido de conexiones actualizado
+
+Las cuentas registradas aparecen primero, en filas compactas. «Conectado» refleja el estado guardado de la autorización, no una prueba de publicación ni aprobación del proveedor. Los errores se presentan como «Revisar conexión». Calendar distingue autorización, calendario creado y error de sincronización; GitHub distingue fuente vinculada de identidad aprobada.
+
+Los canales pendientes aparecen en «Añade un canal». Las credenciales y Cloudflare están en «Administración · credenciales, dominio y ayuda». Las guías se abren individualmente, en una columna, con instrucciones de campos y resolución de errores.
+
+Google: el callback completo va en **URI de redireccionamiento autorizados**, no en Orígenes JavaScript. Este flujo de servidor no necesita añadir un origen JavaScript. Calendar permite añadir el scope mediante **Agrega permisos manualmente → Agregar a la tabla**. Se pueden conservar proyecto y cliente de YouTube, añadiendo el retorno de Calendar sin borrar los existentes. La autorización de cada servicio sigue siendo independiente.
+
+YouTube: el panel permite consultar los IDs de los canales guardados; no se fusionan ni eliminan canales por nombre o por compartir cuenta Google. Si un usuario reporta duplicados, comparar esos IDs y revisar la autorización es necesario antes de modificar sus datos.
+
+TikTok: la guía separa Sandbox, demostración real y revisión; incluye enlaces de privacidad/términos del dominio actual. No infiere aprobación de TikTok a partir de credenciales guardadas.

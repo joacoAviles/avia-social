@@ -1,15 +1,21 @@
 <section class="journey-guide">
-<h3>Prepara Calendar una vez</h3>
-<ol>
-<li>Abre <a href="https://console.cloud.google.com/">Google Cloud</a>. Selecciona el proyecto de tu aplicación AVIA. Puedes usar el mismo proyecto de YouTube, sin borrar sus credenciales.</li>
-<li>En APIs y servicios → Biblioteca habilita <strong>Google Calendar API</strong>.</li>
-<li>En Google Auth Platform → Audience (Público), si estás en Testing, añade como Test user el correo con el que vas a conectar el calendario. Debe ser el proyecto del cliente OAuth que guardarás aquí.</li>
-<li>En Data Access configura el permiso <code>https://www.googleapis.com/auth/calendar.app.created</code>: permite crear y administrar calendarios exclusivos de AVIA, sin leer el calendario personal.</li>
-<li>En Clients (Clientes), crea un cliente de tipo Aplicación web o añade esta URI a tu cliente existente. Conserva las URI de YouTube y las demás conexiones.</li>
-</ol>
-<label>URI de redirección exacta de Calendar</label><code class="journey-callback">{{ calendar_callback }}</code>
-<p>Si usas el túnel a PROD01, mantén abierto SSH y completa el acceso en el mismo navegador usando el mismo puerto localhost. Para acceso permanente configura el dominio HTTPS de tu instalación.</p>
+<p><strong>Resultado:</strong> un calendario «AVIA Social · {{ workspace.name }}» en tu Google Calendar. Lo que programes o muevas en AVIA se reflejará allí. Tus eventos personales no se leen ni se importan.</p>
+<h3>1 · Abre el proyecto correcto</h3>
+<p>En <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer">Google Cloud</a>, selecciona el proyecto de AVIA en la barra superior. Puedes usar el mismo proyecto y cliente OAuth de YouTube: Calendar requiere otra API, otro permiso y otra URL de retorno. <strong>No borres las credenciales ni las URL de YouTube.</strong></p>
+<h3>2 · Habilita la API y añade el permiso</h3>
+<ol><li>Abre <strong>APIs y servicios → Biblioteca → Google Calendar API</strong>. Pulsa <strong>Habilitar</strong>. Si ves «Administrar», ya está habilitada.</li><li>Ve a <strong>Google Auth Platform → Acceso a los datos (Data Access) → Agregar o quitar permisos</strong>.</li><li>Si no lo encuentras en la lista, baja hasta <strong>Agrega permisos manualmente</strong>. Pega el valor completo de abajo, pulsa <strong>Agregar a la tabla</strong>, confirma que esté seleccionado y guarda.</li></ol>
+<code class="journey-callback">https://www.googleapis.com/auth/calendar.app.created</code>
+<p>No selecciones permisos de BigQuery ni acceso general a todos tus calendarios.</p>
+<h3>3 · Registra el retorno en el campo correcto</h3>
+<p>En <strong>Google Auth Platform → Clientes (Clients)</strong>, abre el cliente web existente o crea uno de tipo <strong>Aplicación web</strong> llamado «AVIA Social · Calendar».</p>
+<div class="guide-fields"><p><strong>URI de redireccionamiento autorizados</strong> → Añadir URI</p><code class="journey-callback">{{ calendar_callback }}</code><p>Pega aquí la URL completa, con <code>/callback/</code> y barra final. Conserva las URI existentes y pulsa Guardar.</p><p><strong>Orígenes autorizados de JavaScript</strong></p><p>Este flujo de servidor no necesita añadir un origen JavaScript. Si tu cliente lo utiliza para otra función, un origen contiene solo el dominio, sin ruta:</p><code class="journey-callback">{{ public_origin }}</code></div>
+<h3>4 · Autoriza tu cuenta de prueba</h3>
+<p>Si la app está en <strong>Testing</strong>, ve a <strong>Audience (Público) → Test users → Add users</strong> y añade el correo que autorizará Calendar. Usa el mismo proyecto del cliente que acabas de configurar.</p>
+<h3>5 · Guarda aquí y conecta</h3>
+<p>Copia el <strong>Client ID</strong> y el <strong>Client secret</strong> de ese cliente. Si reutilizas el de YouTube, son sus mismos valores; no necesitas reemplazar la conexión de YouTube.</p>
 <form method="post">{% csrf_token %}<input type="hidden" name="action" value="credentials"><input type="hidden" name="platform" value="google_calendar"><label>Client ID<input name="client_id" required maxlength="500" autocomplete="off"></label><label>Client secret<input type="password" name="client_secret" required maxlength="2000" autocomplete="new-password"></label><button class="btn-brand" type="submit">Guardar y volver a conexiones</button></form>
-<p>Después pulsa Conectar Google Calendar, acepta el permiso y pulsa Crear calendario AVIA. Se creará un calendario secundario en tu cuenta Google para esta marca. AVIA creará, editará, moverá y retirará allí los eventos correspondientes a tus cambios en la aplicación. No lee tus calendarios personales ni importa sus eventos.</p>
-<p>Si Google muestra 403 access_denied y menciona testers, revisa Audience → Test users. Comprueba que el Client ID del error coincida con Clients en ese proyecto. No cambies a producción solo para saltar ese error. En Testing, los permisos offline pueden exigir reconectar después de 7 días.</p>
+<p>Después: <strong>Conectar Google Calendar → autorizar en Google → Crear calendario AVIA</strong>. Abre Google Calendar y marca el calendario de AVIA para verlo junto a los personales. Los cambios que hagas directamente en Google no reprograman AVIA.</p>
+<details><summary>Si aparece un error, encuentra aquí el siguiente paso</summary><p><strong>«Origen no válido… no debe contener una ruta»:</strong> pegaste el callback en Orígenes JavaScript. Muévelo a URI de redireccionamiento autorizados.</p><p><strong>redirect_uri_mismatch:</strong> compara la URL completa del error con la de arriba. Deben coincidir dominio, ruta y barra final.</p><p><strong>403 access_denied / solo testers:</strong> añade el correo exacto en Audience → Test users y comprueba que el Client ID del error pertenezca a ese proyecto.</p><p><strong>El permiso no aparece:</strong> habilita Calendar API y usa Agrega permisos manualmente. Actualiza la consola si acabas de habilitar la API.</p><p><strong>Se desconecta tras unos días:</strong> en Testing, los refresh tokens de estos permisos normalmente vencen a los 7 días. Reautoriza para continuar las pruebas y prepara los requisitos de producción para una conexión estable.</p></details>
+{% if not request.is_secure %}<p class="journey-callout">Estás en HTTP. Si vas a usar un dominio público, ábrelo por HTTPS antes de copiar el retorno. Si estás probando por SSH/localhost, conserva el mismo navegador y puerto durante la autorización.</p>{% endif %}
+<a href="https://developers.google.com/identity/protocols/oauth2/web-server" target="_blank" rel="noopener noreferrer">Referencia oficial de OAuth de Google ↗</a>
 </section>

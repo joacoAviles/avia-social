@@ -451,3 +451,46 @@ def test_facebook_business_config_id_drives_login(session):
     assert query["config_id"] == ["12345678"]
     assert "scope" not in query
     assert query["response_type"] == ["code"]
+
+
+def test_connected_channels_are_compact_and_identified(session):
+    from apps.social_accounts.models import SocialAccount
+
+    client, ws, url = session
+    SocialAccount.objects.create(
+        workspace=ws,
+        platform="youtube",
+        account_platform_id="channel-demo-one",
+        account_name="Canal ejemplo",
+        connection_status="connected",
+    )
+    response = client.get(url + "?step=connections")
+    html = response.content.decode()
+    assert "connect-row-ok" in html
+    assert "channel-demo-one" in html
+    assert "¿Por qué aparecen varios nombres?" in html
+    assert "Administración · credenciales, dominio y ayuda" in html
+    assert " · connected" not in html
+    SocialAccount.objects.filter(workspace=ws).update(connection_status="error")
+    response = client.get(url + "?step=connections")
+    card = next(c for c in response.context["cards"] if c["platform"] == "youtube")
+    assert card["needs_attention"]
+    assert "Revisar conexión" in response.content.decode()
+
+
+def test_calendar_guide_explains_actual_google_fields(session):
+    client, ws, url = session
+    html = client.get(url + "?step=connections&configure=google_calendar", secure=True).content.decode()
+    assert "Agrega permisos manualmente" in html
+    assert "URI de redireccionamiento autorizados" in html
+    assert "Orígenes autorizados de JavaScript" in html
+    assert "No borres las credenciales" in html
+    assert "mantén abierto SSH" not in html
+
+
+def test_tiktok_review_help_does_not_claim_approval(session):
+    client, ws, url = session
+    html = client.get(url + "?step=connections&configure=tiktok", secure=True).content.decode()
+    assert "https://testserver/terms/" in html
+    assert "https://testserver/privacy/" in html
+    assert "AVIA no consulta ese estado automáticamente" in html
