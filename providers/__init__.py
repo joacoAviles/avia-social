@@ -20,15 +20,19 @@ from .linkedin_company import LinkedInCompanyProvider
 from .linkedin_personal import LinkedInPersonalProvider
 from .mastodon import MastodonProvider
 from .pinterest import PinterestProvider
+from .reddit import RedditProvider
 from .threads import ThreadsProvider
 from .tiktok import TikTokProvider
 from .types import PostType
+from .x import XProvider
 from .youtube import YouTubeProvider
 
 if TYPE_CHECKING:
     from .base import SocialProvider
 
 PROVIDER_REGISTRY: dict[str, type[SocialProvider]] = {
+    "x": XProvider,
+    "reddit": RedditProvider,
     "facebook": FacebookProvider,
     "instagram": InstagramProvider,
     "instagram_login": InstagramLoginProvider,

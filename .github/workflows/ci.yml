@@ -34,8 +34,8 @@ jobs:
           python-version: '3.12'
           cache: pip
       - run: pip install -r requirements.lock
-      - run: ruff check apps/avia_brand config/settings/avia.py config/settings/avia_test.py scripts/setup.py scripts/cloudflare_setup.py
-      - run: ruff format --check apps/avia_brand config/settings/avia.py config/settings/avia_test.py scripts/setup.py scripts/cloudflare_setup.py
+      - run: ruff check providers/x.py providers/reddit.py apps/avia_brand config/settings/avia.py config/settings/avia_test.py scripts/setup.py scripts/cloudflare_setup.py
+      - run: ruff format --check providers/x.py providers/reddit.py apps/avia_brand config/settings/avia.py config/settings/avia_test.py scripts/setup.py scripts/cloudflare_setup.py
       - run: python manage.py makemigrations --check --dry-run
       - run: pytest apps/avia_brand apps/accounts apps/common/tests/test_review_banner.py tests/test_oauth_pkce.py apps/members apps/composer apps/calendar apps/approvals apps/api apps/publisher tests/test_media_routing.py
       - run: python3 scripts/setup.py

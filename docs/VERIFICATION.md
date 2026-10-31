@@ -53,3 +53,9 @@ La CI reproduce la selección de pruebas, migraciones, validación Compose, cons
 ## Módulo Cloudflare Tunnel
 
 45 pruebas de configuración y onboarding aprobadas; configuración Compose validada con y sin perfil cloudflare. Imagen cloudflared 2026.10.6 descargada y ejecutada para comprobar versión y soporte token-file, fijada por digest. Ajustes reales de HTTPS comprobados: cookies seguras, origen CSRF y redirección al hostname público. Sin túnel externo ni OAuth Meta probado en vivo; requiere dominio y token del propietario.
+
+## LinkedIn y nuevos canales
+
+Diagnóstico de PROD01 de solo lectura: LinkedIn Personal y Company sin credenciales completas en entorno y sin filas de credenciales en BD. Se añadió la preparación de ambas modalidades al onboarding y acceso directo desde el selector de cuentas. No se modificó el servidor.
+
+X y Reddit incluyen autorización, renovación y publicación limitada a texto; pruebas simuladas cubren PKCE de X, intercambio, errores, destino Reddit explícito y rechazo de medios. No hay OAuth ni publicación real verificados para estos conectores. WhatsApp personal es acceso manual y Business conserva estado pendiente, sin almacenar tokens ni anunciar una integración inexistente.

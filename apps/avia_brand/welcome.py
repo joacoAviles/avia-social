@@ -55,6 +55,8 @@ class BrandForm(forms.Form):
 
 
 class CredentialForm(forms.Form):
+    subreddit = forms.RegexField(r"\A[A-Za-z0-9_]{2,30}\Z", required=False, max_length=30)
+    reddit_username = forms.RegexField(r"\A[A-Za-z0-9_-]{3,30}\Z", required=False, max_length=30)
     client_id = forms.CharField(label="Client ID / Client key", max_length=500)
     client_secret = forms.CharField(label="Client secret", widget=forms.PasswordInput, max_length=2000)
     config_id = forms.RegexField(r"\A[0-9]{1,100}\Z", label="Configuration ID (config_id)", required=False)
@@ -187,6 +189,10 @@ def journey(request, workspace_id):
             if action == "credentials":
                 platform = request.POST.get("platform")
                 if platform not in {
+                    "linkedin_personal",
+                    "linkedin_company",
+                    "x",
+                    "reddit",
                     "youtube",
                     "tiktok",
                     "instagram_login",
@@ -207,8 +213,17 @@ def journey(request, workspace_id):
                             "meta_flow",
                             "Esta versión no admite Unified Login/SUAT. No guardamos ni reemplazamos tus credenciales. Selecciona el flujo compatible solo si coincide con la configuración real de Meta.",
                         )
+                if platform == "reddit":
+                    credential_form.is_valid()
+                    for field in ("subreddit", "reddit_username"):
+                        if not credential_form.cleaned_data.get(field):
+                            credential_form.add_error(field, "Obligatorio para configurar Reddit.")
                 if credential_form.is_valid():
                     values = dict(credential_form.cleaned_data)
+                    subreddit = values.pop("subreddit", "")
+                    reddit_username = values.pop("reddit_username", "")
+                    if platform == "reddit":
+                        values.update(subreddit=subreddit, user_agent=f"web:avia-social:0.1 (by /u/{reddit_username})")
                     config_id = values.pop("config_id", "")
                     values.pop("meta_flow", None)
                     if platform == "facebook" and config_id:
@@ -271,6 +286,30 @@ def journey(request, workspace_id):
     configured = _get_configured_platforms(workspace.organization_id)
     cards = []
     for platform, title, description, guide in [
+        (
+            "linkedin_personal",
+            "LinkedIn Personal",
+            "Publica en tu perfil profesional.",
+            "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin",
+        ),
+        (
+            "linkedin_company",
+            "LinkedIn Company Page",
+            "Conecta las páginas de empresa que administras.",
+            "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/community-management-overview",
+        ),
+        (
+            "x",
+            "X / Twitter",
+            "Conecta tu cuenta. Esta versión admite publicaciones de texto.",
+            "https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code",
+        ),
+        (
+            "reddit",
+            "Reddit",
+            "Texto en la comunidad configurada; requiere acceso aprobado a Data API.",
+            "https://support.reddithelp.com/hc/en-us/articles/14945211791892-Developer-Platform-Accessing-Reddit-Data",
+        ),
         (
             "instagram_login",
             "Instagram directo",

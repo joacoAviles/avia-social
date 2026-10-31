@@ -13,6 +13,8 @@ from apps.common.managers import OrgScopedManager
 # with no entry (bluesky, mastodon) use session / per-instance auth and need no
 # app-level credentials.
 REQUIRED_CREDENTIAL_KEYS = {
+    "x": (("client_id",), ("client_secret",)),
+    "reddit": (("client_id",), ("client_secret",), ("subreddit",), ("user_agent",)),
     "facebook": (("client_id", "app_id"), ("client_secret", "app_secret")),
     "instagram": (("client_id", "app_id"), ("client_secret", "app_secret")),
     "instagram_login": (("client_id", "app_id"), ("client_secret", "app_secret")),
@@ -41,6 +43,8 @@ def derive_is_configured(platform, credentials):
 
 class PlatformCredential(models.Model):
     class Platform(models.TextChoices):
+        X = "x", "X / Twitter"
+        REDDIT = "reddit", "Reddit"
         FACEBOOK = "facebook", "Facebook"
         INSTAGRAM = "instagram", "Instagram"
         INSTAGRAM_LOGIN = "instagram_login", "Instagram (Direct)"

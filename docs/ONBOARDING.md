@@ -176,3 +176,18 @@ Google: el callback completo va en **URI de redireccionamiento autorizados**, no
 YouTube: el panel permite consultar los IDs de los canales guardados; no se fusionan ni eliminan canales por nombre o por compartir cuenta Google. Si un usuario reporta duplicados, comparar esos IDs y revisar la autorización es necesario antes de modificar sus datos.
 
 TikTok: la guía separa Sandbox, demostración real y revisión; incluye enlaces de privacidad/términos del dominio actual. No infiere aprobación de TikTok a partir de credenciales guardadas.
+
+## LinkedIn, X y Reddit
+
+LinkedIn Personal y Company ya disponen de formularios independientes en la guía. Si aparecen «Sin configurar», abre **Preparar esta conexión**: se requieren Client ID y Client Secret efectivos para esa modalidad. La misma aplicación puede servir para ambas si tiene los productos y permisos requeridos; registra ambos callbacks y configura cada modalidad. No se copian ni activan credenciales automáticamente entre modalidades.
+
+- Personal: OpenID Connect + Share on LinkedIn, sin prometer mensajes o estadísticas personales.
+- Company: acceso Community Management y permisos de organización; un login personal no concede acceso a páginas por sí solo.
+- X: cliente web OAuth 2.0 confidencial, PKCE S256, renovación y publicaciones de texto. No multimedia, inbox ni estadísticas. Requiere acceso API de la instalación; revisar condiciones y costos en X.
+- Reddit: app web con acceso aprobado a Data API; identity + submit, renovación y posts de texto. Configura la comunidad destino y usuario desarrollador en el formulario. El destino se comparte entre cuentas Reddit de la organización y cambiarlo afecta envíos futuros. No se implementan flair, multimedia, mensajes o estadísticas. El título explícito del editor tiene prioridad; en su ausencia se usa la primera línea (máximo 300 caracteres).
+
+Los conectores nuevos se verifican con respuestas simuladas, no con cuentas reales. Ninguna autorización ni publicación externa se ejecuta al actualizar. La publicación permanece sujeta al interruptor existente AVIA_PUBLISH_ENABLED y los permisos del usuario.
+
+WhatsApp personal aparece como acceso manual a WhatsApp Web: no sincroniza ni automatiza chats. WhatsApp Business aparece separado, con requisitos de Business Platform y estado **Integración pendiente**. Cloud API, webhooks, plantillas y mensajería todavía no están implementados; no se recogen tokens ni se declara una cuenta conectada.
+
+Fuentes: [LinkedIn Personal](https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin), [X OAuth](https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code), [Reddit acceso API](https://support.reddithelp.com/hc/en-us/articles/14945211791892-Developer-Platform-Accessing-Reddit-Data), [Reddit endpoints](https://www.reddit.com/dev/api/), [WhatsApp Business Platform](https://business.whatsapp.com/products/business-platform).
