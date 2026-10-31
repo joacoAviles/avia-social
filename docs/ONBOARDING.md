@@ -145,3 +145,22 @@ La pantalla aportada por el usuario muestra Unified Login y un token de usuario 
 - OAuth y webhooks tienen destinos distintos. No se realiza publicación, solicitud de revisión ni cambio de permisos en Meta desde este asistente.
 
 Pendiente para Unified Login: verificar contrato OAuth/activos con documentación accesible de Meta, implementar token SUAT y su validación/revocación, descubrir cuentas sin depender de `/me/accounts`, probar selección y almacenamiento, y realizar una prueba autorizada de extremo a extremo. No anunciar soporte hasta completar esas pruebas.
+
+## Páginas públicas para registrar aplicaciones
+
+AVIA sirve `/terms/` (Términos de servicio) y `/privacy/` (Política de privacidad) sin iniciar sesión. Antes de enviarlas a una plataforma, completa en `.env` los datos reales del operador de esta instalación:
+
+```dotenv
+AVIA_LEGAL_OPERATOR="Nombre legal del responsable"
+AVIA_LEGAL_CONTACT_EMAIL=correo-publico@tu-dominio.cl
+```
+
+Recrea app y worker para cargar los cambios. Los textos describen la distribución actual; el responsable debe revisarlos y adaptarlos si añade proveedores o cambia las prácticas de datos. Sin estos campos las páginas muestran explícitamente que falta configurar la identidad/contacto; no se inventan datos de una empresa.
+
+En el formulario de la plataforma utiliza tu dominio HTTPS definitivo:
+
+- Terms of Service URL: `https://social.tudominio.cl/terms/`
+- Privacy Policy URL: `https://social.tudominio.cl/privacy/`
+- Instrucciones de eliminación, cuando se soliciten: `https://social.tudominio.cl/privacy/#eliminacion` (es una página de instrucciones, no un callback automático).
+
+Comprueba ambos enlaces en una ventana privada, sin sesión ni pantalla Cloudflare Access. Tener los archivos en GitHub no publica automáticamente las páginas en tu servidor ni acredita aprobación de la plataforma.

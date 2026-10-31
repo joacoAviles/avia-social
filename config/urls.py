@@ -7,6 +7,7 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 from django.views.static import serve
 
+from apps.avia_brand import legal
 from apps.accounts.views import health_check
 from apps.api.api import api as agent_api
 from apps.oauth_server import views as oauth_views
@@ -14,6 +15,8 @@ from apps.oauth_server import views as oauth_views
 logger = logging.getLogger(__name__)
 
 urlpatterns = [
+    path("terms/", legal.terms, name="legal_terms"),
+    path("privacy/", legal.privacy, name="legal_privacy"),
     path("welcome/", include("apps.avia_brand.welcome_urls")),
     path("brand-system/", include("apps.avia_brand.urls")),
     path("admin/", admin.site.urls),

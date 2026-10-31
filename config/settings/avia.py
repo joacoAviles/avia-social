@@ -23,3 +23,6 @@ CSRF_TRUSTED_ORIGINS = [APP_URL.rstrip("/")] if SECURE_SSL_REDIRECT else []  # n
 # Do not impose HSTS on unrelated subdomains of a self-hosted installation.
 SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
+
+AVIA_LEGAL_OPERATOR = env("AVIA_LEGAL_OPERATOR", default="")  # noqa: F405
+AVIA_LEGAL_CONTACT_EMAIL = env("AVIA_LEGAL_CONTACT_EMAIL", default="")  # noqa: F405
