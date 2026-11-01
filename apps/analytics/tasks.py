@@ -116,6 +116,7 @@ def _analytics_failure_backoff(failure_count: int) -> timedelta:
 
 # Per-platform backfill window (days) on initial connect.
 BACKFILL_DAYS_PER_PLATFORM: dict[str, int] = {
+    "instagram_unified": 0,
     "facebook": 90,
     "instagram": 90,
     "instagram_login": 90,
@@ -340,7 +341,7 @@ def _resolve_provider(account):
     from apps.publisher.engine import _resolve_publish_credentials
     from providers import get_provider
 
-    return get_provider(account.platform, _resolve_publish_credentials(account))
+    return get_provider(account.platform, _resolve_publish_credentials(account, read_only=True))
 
 
 def _analytics_provider_and_token(account) -> tuple:
@@ -641,11 +642,17 @@ def _sync_account_metrics(
     if provider is None or access_token is None:
         provider, access_token = _analytics_provider_and_token(account)
     if account.platform == "youtube":
+        from apps.social_accounts.models import SocialAccount
+
         from .youtube_reports import sync_channel_reports
 
         try:
             sync_channel_reports(account, provider, access_token, force=force_today)
-        except (QuotaExceededError, TokenExpiredError):
+            SocialAccount.objects.filter(pk=account.pk, youtube_data_generation=account.youtube_data_generation).update(
+                analytics_status="ready", analytics_error_reason="", analytics_checked_at=timezone.now()
+            )
+        except (QuotaExceededError, TokenExpiredError) as exc:
+            _record_analytics_error(account, exc, provider)
             raise
         except Exception as exc:
             _record_analytics_error(account, exc, provider)
@@ -1158,10 +1165,33 @@ def _refresh_follower_count(account, metrics) -> None:
 
 
 def _record_analytics_error(account, exc, provider):
+    from apps.social_accounts.models import SocialAccount
+
     if account.platform == "instagram":
         from .instagram_access import record_failure
 
         record_failure(account, exc, provider)
+    elif account.platform == "youtube":
+        # Keep only a classification, never the provider response or token URL.
+        reason = "permission" if _is_insufficient_scope(exc) else "request_failed"
+        if isinstance(exc, TokenExpiredError):
+            reason = "authorization"
+        elif isinstance(exc, QuotaExceededError):
+            reason = "quota"
+        raw = getattr(exc, "raw_response", {}) or {}
+        error = raw.get("error", {}) if isinstance(raw, dict) else {}
+        reasons = (
+            {e.get("reason") for e in error.get("errors", []) if isinstance(e, dict)}
+            if isinstance(error, dict)
+            else set()
+        )
+        if reasons & {"accessNotConfigured", "serviceDisabled"}:
+            reason = "api_disabled"
+        SocialAccount.objects.filter(pk=account.pk, youtube_data_generation=account.youtube_data_generation).update(
+            analytics_status="attention_required", analytics_error_reason=reason, analytics_checked_at=timezone.now()
+        )
+        if reason in {"permission", "authorization"}:
+            _mark_needs_reconnect(account)
     elif _is_insufficient_scope(exc):
         _mark_needs_reconnect(account)
 

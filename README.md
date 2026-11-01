@@ -1,8 +1,10 @@
-# AVIA Social 0.1
+# AVIA Social 0.2 · candidata de producción
 
 Gestión social autohospedada, derivada de [BrightBean Studio](https://github.com/brightbeanxyz/brightbean-studio), bajo **AGPL-3.0**. Marcas independientes, editor, calendario, aprobaciones y API, con identidad versionada desde repositorios privados de GitHub.
 
 **Versión inicial para validación local. Ninguna red social se declara probada en vivo.** El envío real está desactivado por defecto. No incluye credenciales, logos, manifiestos ni documentos privados del AVIA Brand System.
+
+Consulta [cambios, instalación y límites de 0.2](docs/RELEASE-0.2.md).
 
 ## Distribución autohospedada
 
@@ -10,7 +12,7 @@ Cada persona u organización instala AVIA Social en su propio Docker y controla 
 
 Las conexiones sociales requieren las aplicaciones OAuth y permisos de cada instalación. GitHub es opcional: cada instalación puede vincular explícitamente su propio repositorio de identidad con credenciales de lectura. Las tres fuentes privadas AVIA siguen siendo exclusivas de sus marcas y no son necesarias para arrancar.
 
-El objetivo de una versión estable es permitir instalación limpia y actualizaciones verificadas sin recrear datos ni conexiones. La versión 0.1 sigue en validación; consulte las condiciones de aceptación antes de usar cuentas reales.
+El objetivo de una versión estable es permitir instalación limpia y actualizaciones verificadas sin recrear datos ni conexiones. La versión 0.2 sigue en validación externa; consulte las condiciones de aceptación antes de usar cuentas reales.
 
 ## Instalación
 

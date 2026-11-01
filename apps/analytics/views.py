@@ -11,11 +11,13 @@ from __future__ import annotations
 import json
 import logging
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
+from django_ratelimit.decorators import ratelimit
 
 from apps.composer.models import PlatformPost
 from apps.members.models import WorkspaceMembership
@@ -173,6 +175,9 @@ def analytics_account(request: HttpRequest, workspace_id, account_id) -> HttpRes
 
     context: dict = {
         "workspace": workspace,
+        "can_refresh_metrics": WorkspaceMembership.objects.get(
+            user=request.user, workspace=workspace
+        ).effective_permissions.get("manage_social_accounts", False),
         "active_account": account,
         "accounts": accounts,
         "days": days,
@@ -281,3 +286,22 @@ def post_detail(request: HttpRequest, workspace_id, post_id) -> HttpResponse:
     context = services.post_detail(post)
     context.update({"workspace": workspace})
     return render(request, "analytics/_post_detail.html", context)
+
+
+@login_required
+@require_POST
+@ratelimit(key="user", rate="3/h", block=True)
+def refresh_youtube(request, workspace_id, account_id):
+    workspace = _get_workspace(request, workspace_id)
+    membership = WorkspaceMembership.objects.get(user=request.user, workspace=workspace)
+    if not membership.effective_permissions.get("manage_social_accounts"):
+        raise PermissionDenied
+    account = get_object_or_404(SocialAccount, pk=account_id, workspace=workspace, platform="youtube")
+    if services.analytics_availability("youtube") is None:
+        from .tasks import backfill_account_analytics
+
+        backfill_account_analytics(str(account.pk), remove_existing_tasks=True)
+        messages.success(
+            request, "Actualización solicitada. El trabajador consultará YouTube; vuelve a esta página en unos minutos."
+        )
+    return redirect("analytics:account", workspace_id=workspace.id, account_id=account.pk)

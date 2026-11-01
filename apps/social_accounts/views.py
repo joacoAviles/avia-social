@@ -338,12 +338,13 @@ def oauth_callback(request, platform):
         if platform == PlatformCredential.Platform.MASTODON:
             extra_creds = _resolve_mastodon_extra_creds(session_data)
 
-        provider = _get_provider_for_platform(platform, request.org.id, **extra_creds)
+        provider = _get_provider_for_platform(platform, ws_membership.workspace.organization_id, **extra_creds)
         redirect_uri = redirect_uri_from_request(request)
         tokens = provider.exchange_code(code, redirect_uri, **pkce_kwargs(session_data.get("code_verifier")))
 
         # Facebook/Instagram/LinkedIn Company: connect Pages, not personal profiles
         if platform in (
+            PlatformCredential.Platform.INSTAGRAM_UNIFIED,
             PlatformCredential.Platform.FACEBOOK,
             PlatformCredential.Platform.INSTAGRAM,
             PlatformCredential.Platform.LINKEDIN_COMPANY,
@@ -395,7 +396,9 @@ def oauth_callback(request, platform):
                         "Manage admins, then reconnect."
                     )
                 else:
-                    if platform == PlatformCredential.Platform.INSTAGRAM:
+                    if platform == PlatformCredential.Platform.INSTAGRAM_UNIFIED:
+                        warning = "Meta no devolvió cuentas de Instagram. Revisa el portfolio y los activos compartidos en la autorización."
+                    elif platform == PlatformCredential.Platform.INSTAGRAM:
                         warning = (
                             "No Instagram Business accounts were found for your account. "
                             "Only Instagram Business or Creator accounts linked to a Facebook Page "
@@ -438,8 +441,8 @@ def oauth_callback(request, platform):
         # YouTube channel at 03:00 UTC was being told to keep doing.
         logger.warning("OAuth callback hit a spent %s quota: %s", platform, exc)
         messages.error(request, quota_connect_error(exc))
-    except Exception:
-        logger.exception("OAuth callback failed for %s", platform)
+    except Exception as exc:
+        logger.warning("OAuth callback failed for %s (%s)", platform, type(exc).__name__)
         messages.error(
             request,
             "Failed to connect account. Please try again.",
@@ -466,6 +469,13 @@ def select_account(request):
         return redirect("dashboard")
 
     workspace_id = page_data["workspace_id"]
+    # Authorization can change while the person is choosing assets in Meta.
+    from apps.members.models import WorkspaceMembership
+
+    membership = WorkspaceMembership.objects.filter(user=request.user, workspace_id=workspace_id).first()
+    if not membership or not membership.effective_permissions.get("manage_social_accounts", False):
+        request.session.pop("oauth_page_select", None)
+        raise PermissionDenied("You no longer have permission to connect accounts in this workspace.")
 
     def _render_picker():
         # Resolve publishability here rather than in the template: Django
@@ -487,7 +497,10 @@ def select_account(request):
         return _render_picker()
 
     # POST: create accounts for selected pages
-    selected_ids = request.POST.getlist("selected_pages")
+    selected_ids = set(request.POST.getlist("selected_pages"))
+    available_ids = {page["id"] for page in page_data["pages"]}
+    if not selected_ids.issubset(available_ids):
+        raise PermissionDenied("The selection contains accounts not authorized by the provider.")
     if not selected_ids:
         messages.error(request, "Please select at least one account.")
         return _render_picker()
@@ -529,6 +542,8 @@ def select_account(request):
                 workspace_id=workspace_id,
                 platform=platform,
                 profile=profile,
+                authorizing_user=request.user,
+                meta_oauth_context=page.get("meta_oauth_context", {}),
                 access_token=access_token,
                 refresh_token=user_tokens.get("refresh_token"),
                 expires_in=user_tokens.get("expires_in"),
@@ -1015,6 +1030,7 @@ def _create_or_update_account(
     facebook_user_token_expires_at=None,
     messaging_access=None,
     authorizing_user=None,
+    meta_oauth_context=None,
 ):
     """Create or update a SocialAccount from OAuth results."""
     token_expires_at = None
@@ -1051,6 +1067,7 @@ def _create_or_update_account(
         account_platform_id=profile.platform_id,
         defaults={
             **analytics_defaults,
+            "meta_oauth_context": meta_oauth_context or {},
             "account_name": profile.name,
             "account_handle": profile.handle or "",
             "avatar_url": profile.avatar_url or "",

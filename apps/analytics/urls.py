@@ -7,6 +7,7 @@ from . import views
 app_name = "analytics"
 
 urlpatterns = [
+    path("<uuid:account_id>/refresh-youtube/", views.refresh_youtube, name="refresh_youtube"),
     path("<uuid:account_id>/status/", views.analytics_status, name="status"),
     path("", views.analytics_index, name="index"),
     path("post/<uuid:post_id>/", views.post_detail, name="post_detail"),

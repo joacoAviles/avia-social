@@ -15,6 +15,7 @@ from .facebook import FacebookProvider
 from .google_business import GoogleBusinessProvider
 from .instagram import InstagramProvider
 from .instagram_login import InstagramLoginProvider
+from .instagram_unified import InstagramUnifiedProvider
 from .linkedin import LINKEDIN_RESERVED_CHARS
 from .linkedin_company import LinkedInCompanyProvider
 from .linkedin_personal import LinkedInPersonalProvider
@@ -36,6 +37,7 @@ PROVIDER_REGISTRY: dict[str, type[SocialProvider]] = {
     "facebook": FacebookProvider,
     "instagram": InstagramProvider,
     "instagram_login": InstagramLoginProvider,
+    "instagram_unified": InstagramUnifiedProvider,
     "linkedin_personal": LinkedInPersonalProvider,
     "linkedin_company": LinkedInCompanyProvider,
     "tiktok": TikTokProvider,

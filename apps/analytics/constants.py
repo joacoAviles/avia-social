@@ -13,6 +13,7 @@ from __future__ import annotations
 # the account-level fetch has already run), but it keeps the per-post window
 # honest for any caller that reads the table directly.
 NO_ANALYTICS_PLATFORMS: dict[str, str] = {
+    "instagram_unified": "Las métricas de Unified Login todavía no están habilitadas en esta versión.",
     "linkedin_personal": ("LinkedIn doesn't expose personal-profile analytics. Only Company Pages have analytics."),
     "bluesky": ("Bluesky's AT Protocol doesn't surface aggregate post analytics."),
     "mastodon": ("The Mastodon API doesn't expose aggregate post analytics."),

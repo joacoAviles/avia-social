@@ -1,7 +1,7 @@
 name: avia-social
 x-app: &app
   build: .
-  image: avia-social:0.1
+  image: avia-social:0.2.0-rc.1
   env_file: .env
   environment:
     DATABASE_URL: postgres://avia:${POSTGRES_PASSWORD}@postgres:5432/avia

@@ -1,0 +1,11 @@
+<section class="a-card" style="padding:16px;margin-bottom:16px" aria-label="Estado de métricas YouTube">
+<strong>Métricas de YouTube</strong>
+<p>Los valores recibidos como cero se muestran como 0. Un dato pendiente se muestra como —; no lo convertimos en cero.</p>
+{% if active_account.analytics_error_reason == "api_disabled" %}<p>Habilita YouTube Analytics API en el mismo proyecto de Google Cloud que usa esta conexión. YouTube Data API v3 por sí sola no entrega estos informes.</p>
+{% elif active_account.analytics_error_reason == "permission" or active_account.analytics_error_reason == "authorization" %}<p>Falta autorización para estadísticas. Reconecta el canal y acepta el permiso de YouTube Analytics.</p>
+{% elif active_account.analytics_error_reason == "quota" %}<p>Google indicó un límite de consultas. La actualización respetará el tiempo de espera.</p>
+{% elif active_account.analytics_error_reason %}<p>No se pudo obtener el informe. Revisa la configuración de YouTube Analytics API y el estado del trabajador.</p>
+{% elif is_fresh %}<p>Aún no hay un informe guardado para este periodo. Comprueba que YouTube Analytics API esté habilitada y solicita una actualización.</p>{% endif %}
+{% if active_account.analytics_checked_at %}<p>Última consulta: {{ active_account.analytics_checked_at }}</p>{% endif %}
+{% if can_refresh_metrics %}<form method="post" action="{% url 'analytics:refresh_youtube' workspace.id active_account.id %}">{% csrf_token %}<button type="submit" class="btn-secondary">Actualizar métricas</button></form>{% endif %}
+</section>

@@ -227,3 +227,42 @@ def test_html_shows_a_reported_period_zero_without_daily_rows(channel, user):
     assert html.context["hero_cards"][0]["derived"].value == 0.0
     assert html.context["hero_cards"][0]["derived"].available is True
     assert not html.context["hero_cards"][0]["derived"].comparison_available
+
+
+def test_read_metrics_when_publishing_disabled(channel):
+    from django.test import override_settings
+
+    from apps.analytics.tasks import _resolve_provider
+    from apps.publisher.engine import _resolve_publish_credentials
+
+    with override_settings(AVIA_PUBLISH_ENABLED=False):
+        assert isinstance(_resolve_provider(channel), YouTubeProvider)
+        with pytest.raises(RuntimeError):
+            _resolve_publish_credentials(channel)
+
+
+def test_youtube_failure_is_visible_without_exposing_provider_payload(channel):
+    from apps.analytics.tasks import _record_analytics_error
+    from providers.exceptions import APIError
+
+    error = APIError(
+        "private diagnostic", status_code=403, raw_response={"error": {"errors": [{"reason": "accessNotConfigured"}]}}
+    )
+    _record_analytics_error(channel, error, None)
+    channel.refresh_from_db()
+    assert channel.analytics_error_reason == "api_disabled"
+    assert channel.analytics_checked_at is not None
+
+
+def test_refresh_youtube_requires_post_and_management_permission(channel, user):
+    client = Client()
+    OrgMembership.objects.get_or_create(
+        user=user, organization=channel.workspace.organization, defaults={"org_role": "owner"}
+    )
+    WorkspaceMembership.objects.create(user=user, workspace=channel.workspace, workspace_role="owner")
+    client.force_login(user)
+    url = reverse("analytics:refresh_youtube", args=[channel.workspace_id, channel.pk])
+    assert client.get(url).status_code == 405
+    with patch("apps.analytics.tasks.backfill_account_analytics") as queue:
+        assert client.post(url).status_code == 302
+        queue.assert_called_once_with(str(channel.pk), remove_existing_tasks=True)

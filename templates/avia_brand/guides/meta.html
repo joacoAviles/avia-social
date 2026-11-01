@@ -1,21 +1,32 @@
 <section class="journey-guide">
-<div class="journey-callout"><strong>Primero comprueba qué flujo permite tu app de Meta.</strong><p>Si ves «Unified Login» y «Token de usuario del sistema (SUAT)», no uses el formulario del flujo anterior. Esta versión todavía no completa la selección de activos y el ciclo de tokens de Unified Login. El asistente rechazará esa modalidad sin cambiar las conexiones existentes.</p></div>
+<div class="journey-callout"><strong>Primero comprueba qué flujo permite tu app de Meta.</strong><p>Si ves «Unified Login» y «Token de usuario del sistema (SUAT)», no uses el formulario del flujo anterior. Usa la opción «Instagram · inicio de sesión unificado» para esa configuración. Las conexiones anteriores se conservan con su flujo original.</p></div>
 {% if not request.is_secure %}<p class="journey-callout"><strong>Estás usando HTTP.</strong> La pantalla de Meta que compartiste exige una URL HTTPS. Configura el dominio HTTPS real de AVIA y abre el asistente desde él antes de copiar el callback. Registrar una URL distinta en Meta no cambia la que envía AVIA. Abre «Dominio HTTPS con Cloudflare» en esta guía para prepararlo.</p>{% endif %}
 <p>Un portafolio comercial administra la propiedad de la app; no es una página de Facebook. Si Meta exige portafolio, selecciona el existente con control total o completa su aprobación. No crees otro para intentar evitar el requisito.</p>
-{% if card.platform == 'instagram_login' %}
+{% if card.platform == 'instagram_unified' %}
+<h3>1 · Prepara la app una sola vez</h3><ol><li>Meta → Casos de uso → Administrar mensajes y contenido en Instagram → Configuración de la API con inicio de sesión unificado.</li><li>Selecciona una configuración compatible con Instagram y token empresarial SUAT. Copia su Configuration ID. Para publicar incluye instagram_basic e instagram_content_publish; conserva los permisos obligatorios que indique Meta.</li><li>Registra exactamente el callback HTTPS de abajo. Es distinto al callback de Instagram directo.</li><li>Guarda aquí el Meta App ID, su secreto y Configuration ID. Selecciona Unified Login en el formulario.</li></ol>
+<h3>2 · Inicia sesión y elige tus cuentas</h3><p>Pulsa Conectar, elige Instagram o Facebook en Meta, selecciona el portfolio y autoriza las cuentas profesionales. Al regresar marca una o varias cuentas. Puedes añadir otras después sin borrar las anteriores.</p>
+<p>En desarrollo usa tu cuenta profesional invitada como evaluadora y acepta la invitación en Instagram. Para clientes externos se requiere el acceso avanzado y modo activo que Meta solicite.</p>
+<p>Esta versión incorpora autorización y publicación. Mensajes, webhooks y métricas del flujo nuevo siguen pendientes de validación; no se activan al conectar. Si Meta revoca el token o vence, vuelve a autorizar el portfolio.</p>
+{% elif card.platform == 'instagram_login' %}
 <h3>1 · Prepara Instagram directo</h3>
 <p>Necesitas una cuenta profesional de Instagram (empresa o creador). No necesitas una página de Facebook ni conectar otra red a AVIA.</p>
 <ol>
 <li>Si tu cuenta es personal, cambia a una cuenta profesional desde los ajustes de Instagram.</li>
 <li>El administrador entra en <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Meta for Developers → Mis aplicaciones</a> y crea o selecciona la aplicación. La cuenta de desarrollador de Meta es una configuración administrativa; no vincula una página de Facebook a tu Instagram.</li>
-<li>Solo si Meta permite el flujo anterior, configura Instagram API con Instagram Login. Si indica que no está disponible para apps nuevas y exige Unified Login, este conector no es compatible con esa configuración; no pruebes intercambiando App IDs.</li>
+<li>Solo si Meta permite el flujo anterior, configura Instagram API con Instagram Login. Si indica que no está disponible para apps nuevas y exige Unified Login, selecciona «Instagram · inicio de sesión unificado» en AVIA; no intercambies App IDs en el conector anterior.</li>
 <li>Registra la dirección de retorno que mostramos debajo. Usa el dominio HTTPS de esta instalación.</li>
 <li>Copia el Instagram App ID y su secreto correspondiente a este formulario y guarda. No uses las credenciales de otra aplicación ni tokens copiados de Instagram.</li>
 </ol>
 <h3>2 · Conecta Instagram</h3>
-<p>Pulsa «Conectar Instagram directo», inicia sesión en Instagram y acepta los permisos. Al regresar revisa el nombre y el estado de la cuenta. No hace falta completar Facebook, Google ni GitHub primero.</p>
+<p>Pulsa «Conectar Instagram directo», inicia sesión en Instagram y acepta los permisos. Al regresar revisa el nombre y el estado de la cuenta. Para otra cuenta, vuelve a «Añadir otra cuenta» y elige esa cuenta en Instagram. Si el proveedor recuerda la anterior, cambia la sesión en Instagram antes de autorizar. No se reemplazan cuentas con identificadores distintos. No hace falta completar Facebook, Google ni GitHub primero.</p>
+{% elif card.platform == 'instagram' %}
+<h3>1 · Prepara Instagram vía Facebook</h3>
+<p>Para aplicaciones que ya admiten Facebook Login con token de usuario. Cada Instagram debe ser profesional y estar vinculado a una página que administras. No es el flujo Unified Login/SUAT de las apps nuevas.</p>
+<ol><li>En Meta, habilita el acceso a Instagram y a las páginas vinculadas para tu aplicación existente.</li><li>Registra exactamente el callback mostrado debajo. Este callback es distinto al de Instagram directo.</li><li>Guarda el App ID y secreto de Meta; si corresponde, el Configuration ID de una configuración con token de usuario.</li></ol>
+<h3>2 · Elige todas tus cuentas</h3>
+<p>Inicia sesión con Facebook y autoriza las páginas vinculadas. AVIA mostrará las cuentas de Instagram disponibles: marca una o varias y confirma. Puedes repetir «Añadir otra cuenta» con otra autorización; las cuentas anteriores permanecen.</p>
 {% else %}
-<h3>1 · Prepara Facebook</h3>
+<h3>1 · Prepara Facebook Pages</h3>
 <p>Conecta páginas sobre las que tienes permisos de administración. Esta opción no publica en perfiles personales ni ofrece conexión de grupos.</p>
 <ol>
 <li>El administrador abre <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Meta for Developers → Mis aplicaciones</a> y crea o selecciona la aplicación.</li>
@@ -29,3 +40,6 @@
 <p class="journey-note">El administrador prepara la aplicación una vez; cada usuario autoriza su cuenta. Para pruebas usa cuentas y roles autorizados por Meta. Para usuarios externos, completa la revisión y los requisitos de acceso que Meta solicite para los permisos elegidos. Una autorización no confirma que todas las funciones de publicación o mensajes estén aprobadas.</p>
 <h3>Qué revisar antes de autorizar</h3><ol><li>Meta App ID, secreto y config_id deben pertenecer a la misma app y configuración.</li><li>La cuenta de prueba debe tener los roles y acceso a los activos requeridos. Revisa solicitudes pendientes del portafolio.</li><li>Publicar en páginas requiere permisos como pages_manage_posts; listar páginas, pages_show_list. No añadas permisos publicitarios solo porque la pantalla los ofrece.</li><li>La URL OAuth es para iniciar sesión. La URL de webhook es otra configuración: no pegues el callback OAuth en webhooks.</li><li>Una conexión guardada no acredita revisión de Meta, mensajes ni publicación real. Comprueba esas funciones por separado.</li></ol>
 </section>
+
+<h3>Facebook personal</h3><p>Tu perfil personal sirve para iniciar sesión y autorizar las páginas que administras. No es un canal de publicación automática: AVIA no ofrece programación sobre el perfil personal. Puedes preparar contenido en AVIA y publicarlo manualmente en Facebook.</p>
+<h3>Si falta una cuenta</h3><ol><li>Comprueba que entraste con la persona que administra esa página o Instagram.</li><li>En el diálogo de Meta revisa los activos autorizados; solo aparecerán los que concediste.</li><li>En modo de desarrollo, la persona y sus activos deben estar habilitados para pruebas de esa app.</li><li>Para una app nueva que solo ofrece Unified Login/SUAT, elige el conector de inicio de sesión unificado. No cambies las credenciales de una conexión anterior para intentar migrarla.</li></ol>

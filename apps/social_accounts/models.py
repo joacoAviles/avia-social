@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db import models, router, transaction
 from django.utils import timezone
 
-from apps.common.encryption import EncryptedTextField
+from apps.common.encryption import EncryptedJSONField, EncryptedTextField
 from apps.common.managers import WorkspaceScopedManager
 from apps.credentials.models import PlatformCredential
 
@@ -51,6 +51,7 @@ class SocialAccount(models.Model):
         max_length=255,
         help_text="The account's native ID on the platform.",
     )
+    meta_oauth_context = EncryptedJSONField(default=dict, blank=True)
     account_name = models.CharField(max_length=255)
     account_handle = models.CharField(max_length=255, blank=True, default="")
     avatar_url = models.URLField(max_length=2000, blank=True, default="")

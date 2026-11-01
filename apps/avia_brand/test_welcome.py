@@ -420,7 +420,7 @@ def test_meta_unified_refused_without_overwriting_existing(session):
         secure=True,
     )
     assert response.status_code == 200
-    assert "no admite Unified Login/SUAT" in response.content.decode()
+    assert "Para SUAT usa Instagram Unified Login" in response.content.decode()
     original.refresh_from_db()
     assert original.credentials["client_id"] == "old"
 

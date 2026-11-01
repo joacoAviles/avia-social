@@ -51,6 +51,7 @@ def fetch_me_accounts(
     fields: str,
     error_message: str,
     max_seconds: float = META_ACCOUNTS_MAX_SECONDS,
+    edge: str = "accounts",
 ) -> list[dict]:
     """Walk every page of ``/me/accounts`` and return the raw entries.
 
@@ -77,7 +78,7 @@ def fetch_me_accounts(
             params["after"] = after
         data = provider._request(
             "GET",
-            f"{base_url}/me/accounts",
+            f"{base_url}/me/{edge}",
             access_token=access_token,
             params=params,
             # The budget has to bound each request, not just the gaps between

@@ -195,7 +195,9 @@ def journey(request, workspace_id):
                     "reddit",
                     "youtube",
                     "tiktok",
+                    "instagram_unified",
                     "instagram_login",
+                    "instagram",
                     "facebook",
                     "google_login",
                     "google_calendar",
@@ -204,14 +206,18 @@ def journey(request, workspace_id):
                 if platform in {"google_login", "google_calendar"} and not request.user.is_superuser:
                     raise PermissionDenied
                 credential_form = CredentialForm(request.POST)
-                if platform in {"instagram_login", "facebook"}:
+                if platform in {"instagram_login", "instagram", "facebook", "instagram_unified"}:
                     credential_form.is_valid()
                     flow = request.POST.get("meta_flow", "")
                     expected = "instagram_legacy" if platform == "instagram_login" else "facebook_user"
+                    if platform == "instagram_unified":
+                        expected = "unified_suat"
+                        if not credential_form.cleaned_data.get("config_id"):
+                            credential_form.add_error("config_id", "Configuration ID es obligatorio.")
                     if flow != expected:
                         credential_form.add_error(
                             "meta_flow",
-                            "Esta versión no admite Unified Login/SUAT. No guardamos ni reemplazamos tus credenciales. Selecciona el flujo compatible solo si coincide con la configuración real de Meta.",
+                            "Este formulario corresponde a otro flujo. Para SUAT usa Instagram Unified Login. No reemplazamos tus credenciales. Selecciona el flujo compatible solo si coincide con la configuración real de Meta.",
                         )
                 if platform == "reddit":
                     credential_form.is_valid()
@@ -226,7 +232,7 @@ def journey(request, workspace_id):
                         values.update(subreddit=subreddit, user_agent=f"web:avia-social:0.1 (by /u/{reddit_username})")
                     config_id = values.pop("config_id", "")
                     values.pop("meta_flow", None)
-                    if platform == "facebook" and config_id:
+                    if platform in {"facebook", "instagram", "instagram_unified"} and config_id:
                         values["config_id"] = config_id
                     if platform in {"google_login", "google_calendar"}:
                         state, _ = InstallationSetup.objects.get_or_create(pk=1)
@@ -287,6 +293,12 @@ def journey(request, workspace_id):
     cards = []
     for platform, title, description, guide in [
         (
+            "instagram_unified",
+            "Instagram · inicio de sesión unificado",
+            "Para apps nuevas de Meta. Autoriza un portfolio y selecciona una o varias cuentas profesionales, sin página de Facebook.",
+            "https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-unified-login/get-started",
+        ),
+        (
             "linkedin_personal",
             "LinkedIn Personal",
             "Publica en tu perfil profesional.",
@@ -317,8 +329,14 @@ def journey(request, workspace_id):
             "https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/",
         ),
         (
+            "instagram",
+            "Instagram vía Facebook",
+            "Selecciona varias cuentas profesionales vinculadas a páginas que administras. Flujo anterior de Meta.",
+            "https://developers.facebook.com/docs/instagram-platform/instagram-api-with-facebook-login/",
+        ),
+        (
             "facebook",
-            "Facebook",
+            "Facebook Pages",
             "Conecta las páginas que administras. No requiere conectar Instagram.",
             "https://developers.facebook.com/docs/pages-api/getting-started/",
         ),
@@ -348,7 +366,7 @@ def journey(request, workspace_id):
                 "platform": platform,
                 "config_id": (
                     stored_credential.credentials.get("config_id", "")
-                    if stored_credential and platform == "facebook"
+                    if stored_credential and platform in {"facebook", "instagram", "instagram_unified"}
                     else ""
                 ),
                 "title": title,

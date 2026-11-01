@@ -2,6 +2,7 @@
 {# Full-page swap target. The drawer + AlpineJS scope is in index.html. #}
 
 {% include "analytics/_page_header.html" %}
+{% if active_account.platform == "youtube" %}{% include "analytics/_youtube_status.html" %}{% endif %}
 
 {% if active_account.platform == "instagram" and not analytics_unavailable %}
     {% include "analytics/_instagram_status.html" with account=active_account workspace_id=workspace.id %}

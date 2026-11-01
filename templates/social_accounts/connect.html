@@ -94,7 +94,7 @@
             {% endif %}
 
             {% if value not in configured_platforms and value != 'youtube' %}
-            {% if value == 'linkedin_personal' or value == 'linkedin_company' or value == 'x' or value == 'reddit' %}<a class="relative z-10 block mt-3 text-sm underline" href="{% url 'welcome:journey' workspace_id %}?step=connections&amp;configure={{ value }}">Preparar esta conexión →</a>{% else %}<div class="absolute inset-0 rounded-xl bg-white/40 cursor-not-allowed" title="Platform credentials not configured. Contact your administrator."></div>{% endif %}
+            {% if value == 'linkedin_personal' or value == 'linkedin_company' or value == 'x' or value == 'reddit' or value == 'facebook' or value == 'instagram' or value == 'instagram_login' or value == 'instagram_unified' %}<a class="relative z-10 block mt-3 text-sm underline" href="{% url 'welcome:journey' workspace_id %}?step=connections&amp;configure={{ value }}">Preparar esta conexión →</a>{% else %}<div class="absolute inset-0 rounded-xl bg-white/40 cursor-not-allowed" title="Platform credentials not configured. Contact your administrator."></div>{% endif %}
             {% endif %}
         </div>
         {% endfor %}

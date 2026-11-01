@@ -60,7 +60,7 @@ def _check_social_account_health(account_id: str):
     # and inbox sync so every get_provider call resolves credentials identically.
     from apps.publisher.engine import _resolve_publish_credentials
 
-    credentials = _resolve_publish_credentials(account)
+    credentials = _resolve_publish_credentials(account, read_only=True)
 
     try:
         provider = get_provider(account.platform, credentials)

@@ -61,7 +61,7 @@ logger = logging.getLogger(__name__)
 RETRY_BACKOFF = [60, 300, 1800]  # 1min, 5min, 30min
 
 
-def _resolve_publish_credentials(account):
+def _resolve_publish_credentials(account, *, read_only=False):
     """Resolve the credentials dict for publishing on behalf of `account`.
 
     Combines org-level `PlatformCredential` (with `.env` dominant) with
@@ -69,7 +69,7 @@ def _resolve_publish_credentials(account):
     `MastodonAppRegistration`, Bluesky `pds_url`). Returns a plain dict
     suitable for `get_provider(platform, credentials)`.
     """
-    if not getattr(settings, "AVIA_PUBLISH_ENABLED", True):
+    if not read_only and not getattr(settings, "AVIA_PUBLISH_ENABLED", True):
         raise RuntimeError("AVIA Social: live publishing is disabled; validate provider permissions first")
 
     platform = account.platform
@@ -108,7 +108,7 @@ def _resolve_publish_credentials(account):
             )
     elif platform == "facebook":
         credentials["page_id"] = account.account_platform_id
-    elif platform in ("instagram", "instagram_login"):
+    elif platform in ("instagram", "instagram_login", "instagram_unified"):
         credentials["ig_user_id"] = account.account_platform_id
         if platform == "instagram":
             credentials["page_id"] = account.webhook_target_id
@@ -994,7 +994,7 @@ class PublishEngine:
             # platform rules above, rather than leaving each Instagram provider
             # to translate PostType.VIDEO on its own (which instagram_login
             # failed to do, publishing the .mp4 as image_url).
-            if platform in ("instagram", "instagram_login"):
+            if platform in ("instagram", "instagram_login", "instagram_unified"):
                 return PostType.REEL
             return PostType.VIDEO
         if first_media_type == "image":
