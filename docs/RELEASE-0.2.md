@@ -57,3 +57,12 @@ Esta entrega es una candidata 0.2: las pruebas automatizadas no certifican los p
 - Imagen Docker construida y arranque limpio en un proyecto Docker aislado: PostgreSQL, migraciones, app y trabajador correctos; `/health/` respondió `ok`.
 - `manage.py check` sin incidencias y `makemigrations --check --dry-run` sin cambios pendientes.
 - Diagnóstico de la instalación existente realizado sin modificar datos: no había informes YouTube; el resolvedor de credenciales rechazaba las consultas cuando la publicación estaba desactivada.
+
+### Corrección del recorrido Meta (2026-11-01)
+
+- Configuración inicial en tres pasos: preparar app, iniciar sesión, elegir cuentas.
+- Formulario con destino explícito: no depende de conservar los parámetros de navegación para mostrar errores.
+- Un POST inválido mantiene el proveedor y muestra los errores; nunca devuelve secretos al HTML.
+- Guardar vuelve al mismo proveedor y muestra el botón de autorización, sin pasar por la lista completa.
+- El enlace al editor se retira durante la configuración. La ayuda extensa queda desplegable.
+- Verificación: 53 pruebas focalizadas pasan. La inspección de la instalación encontró cero credenciales Meta guardadas; no permite atribuir retrospectivamente la causa de los dos intentos fallidos. La autorización real sigue pendiente.

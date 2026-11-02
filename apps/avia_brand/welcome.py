@@ -188,6 +188,9 @@ def journey(request, workspace_id):
                 raise PermissionDenied
             if action == "credentials":
                 platform = request.POST.get("platform")
+                # A form submitted without its query string must still show its errors.
+                step = "connections"
+                setup_provider = platform
                 if platform not in {
                     "linkedin_personal",
                     "linkedin_company",
@@ -246,7 +249,12 @@ def journey(request, workspace_id):
                             organization=workspace.organization, platform=platform, defaults={"credentials": values}
                         )
                     messages.success(request, "Credenciales guardadas. Falta autorizar la conexión con el proveedor.")
-                    return redirect(reverse("welcome:journey", args=[workspace.id]) + "?step=connections")
+                    return redirect(
+                        reverse("welcome:journey", args=[workspace.id])
+                        + "?step=connections&configure="
+                        + platform
+                        + "&saved=1"
+                    )
             else:
                 github_form = GitHubForm(request.POST)
                 if github_form.is_valid():

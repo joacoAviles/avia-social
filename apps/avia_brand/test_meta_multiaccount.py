@@ -120,3 +120,45 @@ def test_unified_setup_requires_config_and_preserves_legacy(session):
     payload["config_id"] = "1234"
     assert client.post(url, payload, HTTP_HOST="localhost").status_code == 302
     assert PlatformCredential.objects.get(platform="instagram_unified").is_configured
+
+
+def test_meta_invalid_form_without_query_keeps_visible_error(session):
+    client, workspace, url = session
+    result = client.post(
+        url.split("?")[0],
+        {
+            "action": "credentials",
+            "platform": "instagram_unified",
+            "meta_flow": "unified_suat",
+            "client_id": "demo",
+            "client_secret": "synthetic",
+        },
+        HTTP_HOST="localhost",
+    )
+    assert result.status_code == 200
+    assert result.context["step"] == "connections"
+    assert result.context["setup_provider"] == "instagram_unified"
+    assert b"Configuration ID es obligatorio" in result.content
+    assert b'name="meta_flow" value="unified_suat"' in result.content
+    assert b'value="synthetic"' not in result.content
+
+
+def test_meta_saved_returns_to_login_step(session):
+    client, workspace, url = session
+    result = client.post(
+        url,
+        {
+            "action": "credentials",
+            "platform": "instagram_unified",
+            "meta_flow": "unified_suat",
+            "client_id": "demo",
+            "client_secret": "synthetic",
+            "config_id": "1234",
+        },
+        HTTP_HOST="localhost",
+    )
+    assert result.status_code == 302
+    assert "configure=instagram_unified&saved=1" in result.url
+    page = client.get(result.url)
+    assert "Aplicación preparada".encode() in page.content
+    assert b"Conectar Instagram" in page.content
