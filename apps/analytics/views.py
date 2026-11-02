@@ -178,6 +178,13 @@ def analytics_account(request: HttpRequest, workspace_id, account_id) -> HttpRes
         "can_refresh_metrics": WorkspaceMembership.objects.get(
             user=request.user, workspace=workspace
         ).effective_permissions.get("manage_social_accounts", False),
+        "youtube_subscriber_total": (
+            AccountInsightsSnapshot.objects.filter(social_account=account, metric_key="subscriber_total")
+            .order_by("-captured_at")
+            .first()
+            if account.platform == "youtube"
+            else None
+        ),
         "active_account": account,
         "accounts": accounts,
         "days": days,

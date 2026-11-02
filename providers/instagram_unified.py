@@ -4,6 +4,7 @@ Separate platform identity keeps existing Instagram grants on their original
 host and token lifecycle. A SUAT is never exchanged as a Facebook user token.
 """
 
+import logging
 from dataclasses import replace
 from urllib.parse import urlencode
 
@@ -13,6 +14,8 @@ from .instagram import BASE_URL as LEGACY_BASE
 from .instagram import InstagramProvider
 from .meta_accounts import fetch_me_accounts
 from .types import OAuthTokens
+
+logger = logging.getLogger(__name__)
 
 GRAPH = "https://graph.facebook.com/v26.0"
 
@@ -84,6 +87,12 @@ class InstagramUnifiedProvider(InstagramProvider):
             fields="id,username",
             error_message="No se pudieron consultar las cuentas autorizadas",
             edge="assigned_instagram_accounts",
+        )
+        logger.info(
+            "Meta discovery: edge=assigned_instagram_accounts returned=%d usable=%d business_present=%s",
+            len(accounts),
+            sum(bool(a.get("id")) for a in accounts),
+            bool(business),
         )
         return [
             {

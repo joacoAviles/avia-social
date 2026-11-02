@@ -397,7 +397,7 @@ def oauth_callback(request, platform):
                     )
                 else:
                     if platform == PlatformCredential.Platform.INSTAGRAM_UNIFIED:
-                        warning = "Meta no devolvió cuentas de Instagram. Revisa el portfolio y los activos compartidos en la autorización."
+                        warning = "Meta completó el inicio de sesión, pero su API devolvió cero cuentas de Instagram asignadas. No se vinculó ninguna cuenta. Comprueba que la configuración elegida tenga la etiqueta «Compatible con el inicio de sesión con Instagram» y que el diálogo incluya tu cuenta. No necesitas eliminar permisos adicionales ni cambiar la caducidad del token."
                     elif platform == PlatformCredential.Platform.INSTAGRAM:
                         warning = (
                             "No Instagram Business accounts were found for your account. "

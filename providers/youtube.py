@@ -903,6 +903,23 @@ class YouTubeProvider(SocialProvider):
                 return result if daily else {}
             params["startIndex"] = params.get("startIndex", 1) + len(rows)
 
+    def get_channel_subscriber_total(self, access_token, channel_id):
+        """Current channel total; never infer it from subscribers gained."""
+        body = self._request(
+            "GET",
+            f"{API_BASE}/channels",
+            access_token=access_token,
+            params={"part": "statistics", "id": channel_id},
+        ).json()
+        for item in body.get("items", []):
+            if item.get("id") != channel_id:
+                continue
+            stats = item.get("statistics", {})
+            if stats.get("hiddenSubscriberCount") or "subscriberCount" not in stats:
+                return None
+            return int(stats["subscriberCount"])
+        return None
+
     def get_channel_daily_metrics(self, access_token, channel_id, start, end):
         return self._channel_report(access_token, channel_id, start, end, daily=True)
 

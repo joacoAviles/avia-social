@@ -1,5 +1,9 @@
 <section class="a-card" style="padding:16px;margin-bottom:16px" aria-label="Estado de métricas YouTube">
 <strong>Métricas de YouTube</strong>
+<div style="margin:16px 0"><span>Suscriptores actuales</span>
+<strong style="display:block;font-size:2rem">{% if youtube_subscriber_total %}{{ youtube_subscriber_total.value|floatformat:0 }}{% else %}—{% endif %}</strong>
+{% if youtube_subscriber_total %}<small>Total del canal consultado el {{ youtube_subscriber_total.captured_at }}. YouTube puede entregar una cifra redondeada.</small>{% else %}<small>Total pendiente de consulta o no disponible en YouTube.</small>{% endif %}
+<p>Los suscriptores ganados corresponden al período seleccionado; no son el total del canal.</p></div>
 <p>Los valores recibidos como cero se muestran como 0. Un dato pendiente se muestra como —; no lo convertimos en cero.</p>
 {% if active_account.analytics_error_reason == "api_disabled" %}<p>Habilita YouTube Analytics API en el mismo proyecto de Google Cloud que usa esta conexión. YouTube Data API v3 por sí sola no entrega estos informes.</p>
 {% elif active_account.analytics_error_reason == "permission" or active_account.analytics_error_reason == "authorization" %}<p>Falta autorización para estadísticas. Reconecta el canal y acepta el permiso de YouTube Analytics.</p>

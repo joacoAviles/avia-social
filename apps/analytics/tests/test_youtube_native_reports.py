@@ -266,3 +266,38 @@ def test_refresh_youtube_requires_post_and_management_permission(channel, user):
     with patch("apps.analytics.tasks.backfill_account_analytics") as queue:
         assert client.post(url).status_code == 302
         queue.assert_called_once_with(str(channel.pk), remove_existing_tasks=True)
+
+
+def test_current_subscribers_are_separate_from_historical_gains(channel):
+    provider = Mock()
+    provider.get_channel_subscriber_total.return_value = 1250
+    provider.get_channel_daily_metrics.return_value = []
+    provider.get_channel_period_metrics.return_value = {"subscribers": 3.0}
+    sync_channel_reports(channel, provider, "token", force=True)
+    total = AccountInsightsSnapshot.objects.get(social_account=channel, metric_key="subscriber_total")
+    assert total.value == 1250
+    assert total.raw == {"source": "youtube_data"}
+    channel.refresh_from_db()
+    assert channel.follower_count == 1250
+    assert account_bundle(channel, 7)["native_current"]["subscribers"] == 3
+    provider.get_channel_subscriber_total.return_value = None
+    sync_channel_reports(channel, provider, "token", force=True)
+    assert not AccountInsightsSnapshot.objects.filter(social_account=channel, metric_key="subscriber_total").exists()
+
+
+@pytest.mark.parametrize(
+    "stats,expected",
+    [
+        ({"subscriberCount": "0"}, 0),
+        ({"subscriberCount": "1230"}, 1230),
+        ({}, None),
+        ({"subscriberCount": "10", "hiddenSubscriberCount": True}, None),
+    ],
+)
+def test_total_subscribers_preserves_zero_and_hidden(stats, expected):
+    provider = YouTubeProvider({})
+    with patch.object(
+        provider, "_request", return_value=Mock(json=lambda: {"items": [{"id": "UCNative", "statistics": stats}]})
+    ) as request:
+        assert provider.get_channel_subscriber_total("token", "UCNative") == expected
+    assert request.call_args.kwargs["params"] == {"part": "statistics", "id": "UCNative"}

@@ -37,6 +37,7 @@ def sync_channel_reports(account, provider, access_token, *, force=False):
         ).exists()
     ):
         return
+    subscriber_total = provider.get_channel_subscriber_total(access_token, account.account_platform_id)
     daily = provider.get_channel_daily_metrics(access_token, account.account_platform_id, start, end)
     reports = []
     for days in REPORT_DAYS:
@@ -57,6 +58,16 @@ def sync_channel_reports(account, provider, access_token, *, force=False):
         )
         if current is None:
             return
+        today = report_now.astimezone(PACIFIC).date()
+        AccountInsightsSnapshot.objects.filter(social_account=current, metric_key="subscriber_total").delete()
+        if isinstance(subscriber_total, int) and not isinstance(subscriber_total, bool) and subscriber_total >= 0:
+            AccountInsightsSnapshot.objects.update_or_create(
+                social_account=current,
+                metric_key="subscriber_total",
+                date=today,
+                defaults={"value": subscriber_total, "raw": {"source": "youtube_data"}, "errors": {}},
+            )
+            SocialAccount.objects.filter(pk=current.pk).update(follower_count=subscriber_total)
         # Replace this native report's window, including rows YouTube removed.
         AccountInsightsSnapshot.objects.filter(social_account=current, date__gte=start, date__lte=end).delete()
         for row in daily:

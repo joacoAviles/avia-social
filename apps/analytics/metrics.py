@@ -24,7 +24,7 @@ METRICS: dict[str, dict[str, str]] = {
     "outbound": {"label": "Outbound clicks", "kind": "count"},
     "follows": {"label": "New follows", "kind": "count"},
     "followers": {"label": "Followers", "kind": "count"},
-    "subscribers": {"label": "Subscribers", "kind": "count"},
+    "subscribers": {"label": "Suscriptores ganados", "kind": "count"},
     "watch_time": {"label": "Watch time", "kind": "minutes"},
     "avg_view_pct": {"label": "Avg view %", "kind": "percent"},
     "engagement": {"label": "Engagement rate", "kind": "percent"},
