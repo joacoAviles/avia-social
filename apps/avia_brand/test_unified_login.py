@@ -74,3 +74,82 @@ def test_unified_does_not_advertise_unimplemented_inbox():
     p = provider()
     assert not supports_webhooks(p)
     assert type(p).get_messages is SocialProvider.get_messages
+
+
+def test_empty_assigned_edge_recovers_only_token_authorized_ig():
+    p = provider()
+    replies = [
+        {"client_business_id": "42"},
+        {"data": []},
+        {
+            "data": {
+                "app_id": "demo",
+                "is_valid": True,
+                "scopes": ["instagram_basic"],
+                "granular_scopes": [{"scope": "instagram_basic", "target_ids": ["12"]}],
+            }
+        },
+        {"id": "12", "username": "authorized"},
+    ]
+    with patch.object(p, "_request", side_effect=[Mock(json=lambda r=r: r) for r in replies]) as req:
+        accounts = p.get_user_pages("customer-grant")
+    assert [a["id"] for a in accounts] == ["12"]
+    assert req.call_args_list[-1].kwargs["access_token"] == "customer-grant"
+    assert accounts[0]["meta_oauth_context"]["client_business_id"] == "42"
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"app_id": "other", "is_valid": True, "scopes": ["instagram_basic"]},
+        {"app_id": "demo", "is_valid": False, "scopes": ["instagram_basic"]},
+        {"app_id": "demo", "is_valid": True, "scopes": []},
+    ],
+)
+def test_empty_edge_rejects_invalid_or_wrong_app_grants(data):
+    p = provider()
+    with patch.object(p, "_request", return_value=Mock(json=lambda: {"data": data})), pytest.raises(OAuthError):
+        p._discover_granted_accounts("grant")
+
+
+def test_empty_edge_does_not_invent_or_lookup_ungranted_accounts():
+    p = provider()
+    data = {"app_id": "demo", "is_valid": True, "scopes": ["instagram_basic"], "granular_scopes": []}
+    with patch.object(p, "_request", return_value=Mock(json=lambda: {"data": data})) as req:
+        assert p._discover_granted_accounts("grant") == []
+        assert req.call_count == 1
+
+
+def test_empty_edge_rejects_response_identity_mismatch():
+    p = provider()
+    replies = [
+        {
+            "data": {
+                "app_id": "demo",
+                "is_valid": True,
+                "scopes": ["instagram_basic"],
+                "granular_scopes": [{"scope": "instagram_basic", "target_ids": ["12"]}],
+            }
+        },
+        {"id": "99", "username": "unrelated"},
+    ]
+    with patch.object(p, "_request", side_effect=[Mock(json=lambda r=r: r) for r in replies]):
+        assert p._discover_granted_accounts("grant") == []
+
+
+def test_granted_page_can_resolve_linked_instagram_with_customer_token():
+    p = provider()
+    replies = [
+        {
+            "data": {
+                "app_id": "demo",
+                "is_valid": True,
+                "scopes": ["instagram_basic"],
+                "granular_scopes": [{"scope": "pages_show_list", "target_ids": ["22"]}],
+            }
+        },
+        {"id": "22", "instagram_business_account": {"id": "12", "username": "authorized"}},
+    ]
+    with patch.object(p, "_request", side_effect=[Mock(json=lambda r=r: r) for r in replies]) as req:
+        assert p._discover_granted_accounts("customer-grant")[0]["id"] == "12"
+    assert req.call_args.kwargs["access_token"] == "customer-grant"

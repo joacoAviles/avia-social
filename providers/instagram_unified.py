@@ -5,11 +5,12 @@ host and token lifecycle. A SUAT is never exchanged as a Facebook user token.
 """
 
 import logging
+import time
 from dataclasses import replace
 from urllib.parse import urlencode
 
 from .base import SocialProvider
-from .exceptions import OAuthError
+from .exceptions import OAuthError, ProviderError
 from .instagram import BASE_URL as LEGACY_BASE
 from .instagram import InstagramProvider
 from .meta_accounts import fetch_me_accounts
@@ -88,7 +89,9 @@ class InstagramUnifiedProvider(InstagramProvider):
             error_message="No se pudieron consultar las cuentas autorizadas",
             edge="assigned_instagram_accounts",
         )
-        logger.info(
+        if not accounts:
+            accounts = self._discover_granted_accounts(access_token)
+        logger.warning(
             "Meta discovery: edge=assigned_instagram_accounts returned=%d usable=%d business_present=%s",
             len(accounts),
             sum(bool(a.get("id")) for a in accounts),
@@ -109,6 +112,88 @@ class InstagramUnifiedProvider(InstagramProvider):
             for a in accounts
             if a.get("id")
         ]
+
+    def _discover_granted_accounts(self, access_token):
+        """Recover only assets explicitly named by Meta's token introspection.
+
+        Never enumerate a business's owned assets with an app token. Each
+        candidate is read with the customer grant and must resolve as Instagram.
+        """
+        deadline = time.monotonic() + 8
+        data = (
+            self._request(
+                "GET",
+                f"{GRAPH}/debug_token",
+                access_token=f"{self.credentials['client_id']}|{self.credentials['client_secret']}",
+                params={"input_token": access_token},
+                timeout=3,
+            )
+            .json()
+            .get("data", {})
+        )
+        if data.get("is_valid") is not True or str(data.get("app_id")) != str(self.credentials["client_id"]):
+            raise OAuthError("Meta devolvió un token inválido o de otra aplicación.", platform=self.platform_name)
+        scopes = data.get("scopes", [])
+        if "instagram_basic" not in scopes:
+            raise OAuthError(
+                "El token autorizado no incluye instagram_basic; la configuración guardada no equivale al permiso concedido.",
+                platform=self.platform_name,
+            )
+        targets = set()
+        pages = set()
+        for grant in data.get("granular_scopes", []):
+            if not isinstance(grant, dict):
+                continue
+            destination = (
+                targets
+                if grant.get("scope") == "instagram_basic"
+                else pages
+                if grant.get("scope") == "pages_show_list"
+                else None
+            )
+            if destination is not None:
+                destination.update(str(i) for i in (grant.get("target_ids") or []) if str(i).isdigit())
+        self.discovery_diagnostic = {
+            "assigned_count": 0,
+            "valid": True,
+            "app_matches": True,
+            "instagram_targets": len(targets),
+            "page_targets": len(pages),
+            "instagram_basic": True,
+        }
+        found = {}
+        # Bound callback work; an administrator can authorize smaller batches.
+        for target in sorted(targets)[:20]:
+            if time.monotonic() >= deadline:
+                break
+            try:
+                account = self._request(
+                    "GET", f"{GRAPH}/{target}", access_token=access_token, params={"fields": "id,username"}, timeout=3
+                ).json()
+            except ProviderError:
+                continue
+            if str(account.get("id")) == target and account.get("username"):
+                found[target] = account
+        if not found:
+            for page_id in sorted(pages)[:10]:
+                if time.monotonic() >= deadline:
+                    break
+                try:
+                    page = self._request(
+                        "GET",
+                        f"{GRAPH}/{page_id}",
+                        access_token=access_token,
+                        params={"fields": "id,instagram_business_account{id,username}"},
+                        timeout=3,
+                    ).json()
+                except ProviderError:
+                    continue
+                account = page.get("instagram_business_account") or {}
+                if str(page.get("id")) == page_id and account.get("id") and account.get("username"):
+                    found[str(account["id"])] = account
+        self.discovery_diagnostic["resolved_count"] = len(found)
+        logger.warning("Meta empty-edge diagnostic: %s", self.discovery_diagnostic)
+        return list(found.values())
 
     def publish_post(self, access_token, content):
         # A SUAT may cover several brands; only the selected account is a destination.
