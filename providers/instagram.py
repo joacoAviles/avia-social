@@ -13,7 +13,7 @@ from urllib.parse import urlencode
 
 from .base import SocialProvider
 from .exceptions import APIError, MessagingError, OAuthError, ProviderError, PublishError, WebhookChannelError
-from .meta_accounts import fetch_me_accounts, page_can_publish
+from .meta_accounts import fetch_pages_with_business_fallback, page_can_publish
 from .meta_comments import (
     fetch_instagram_comments,
     find_own_instagram_comment,
@@ -149,6 +149,11 @@ class InstagramProvider(SocialProvider):
             "instagram_manage_insights",
             "instagram_manage_messages",
             "pages_show_list",
+            # Postiz parity: reading ``instagram_business_account`` on a Page
+            # needs pages_read_engagement; business_management lets discovery
+            # reach Pages held through a Business portfolio.
+            "pages_read_engagement",
+            "business_management",
         ]
 
     @property
@@ -275,7 +280,7 @@ class InstagramProvider(SocialProvider):
         Brightbean should be the Instagram Business account selected from the
         Facebook Pages the user manages.
         """
-        raw_pages = fetch_me_accounts(
+        raw_pages = fetch_pages_with_business_fallback(
             self,
             access_token=access_token,
             base_url=BASE_URL,

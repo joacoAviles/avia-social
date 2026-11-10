@@ -66,8 +66,8 @@ def test_get_user_pages_returns_linked_instagram_business_accounts():
             "can_message": False,
         }
     ]
-    provider._request.assert_called_once()
-    call_args = provider._request.call_args
+    # /me/accounts first; Business-portfolio discovery follows (Postiz parity).
+    call_args = provider._request.call_args_list[0]
     assert call_args.args == ("GET", "https://graph.facebook.com/v25.0/me/accounts")
     assert call_args.kwargs["access_token"] == "user-token"
     assert call_args.kwargs["params"] == {

@@ -264,8 +264,8 @@ def test_get_user_pages_includes_follower_count():
     assert pages[0]["followers_count"] == 123
     assert pages[0]["can_publish"] is True
     assert pages[0]["tasks"] == ["CREATE_CONTENT", "ANALYZE"]
-    provider._request.assert_called_once()
-    call_args = provider._request.call_args
+    # /me/accounts first; Business-portfolio discovery follows (Postiz parity).
+    call_args = provider._request.call_args_list[0]
     assert call_args.args == ("GET", "https://graph.facebook.com/v25.0/me/accounts")
     assert call_args.kwargs["access_token"] == "user-token"
     assert call_args.kwargs["params"] == {

@@ -117,6 +117,95 @@ def fetch_me_accounts(
     return raw_pages
 
 
+def fetch_pages_with_business_fallback(
+    provider: SocialProvider,
+    *,
+    access_token: str,
+    base_url: str,
+    fields: str,
+    error_message: str,
+    max_seconds: float = META_ACCOUNTS_MAX_SECONDS,
+) -> list[dict]:
+    """``/me/accounts`` plus Pages reachable through the user's Business portfolios.
+
+    Pages owned by a Business portfolio are often missing from ``/me/accounts``
+    when the person did not tick them in the Login dialog, or when they hold the
+    Page only through Business Manager. Postiz handles this by also walking
+    ``/me/businesses`` -> ``owned_pages`` / ``client_pages`` (requires
+    ``business_management``). Entries are de-duplicated by Page id, preferring
+    the one that carries a Page access token. Business-edge failures never
+    break onboarding: they are logged with counts only.
+    """
+    started = time.monotonic()
+    pages = fetch_me_accounts(
+        provider,
+        access_token=access_token,
+        base_url=base_url,
+        fields=fields,
+        error_message=error_message,
+        max_seconds=max_seconds,
+    )
+    by_id: dict[str, dict] = {str(p.get("id")): p for p in pages if p.get("id")}
+
+    def _remaining() -> float:
+        return max_seconds - (time.monotonic() - started)
+
+    def _walk(url: str, params: dict) -> list[dict]:
+        out: list[dict] = []
+        for _ in range(META_ACCOUNTS_MAX_PAGES):
+            if _remaining() <= 0:
+                break
+            data = provider._request(
+                "GET",
+                url,
+                access_token=access_token,
+                params=params,
+                timeout=min(REQUEST_TIMEOUT, max(_remaining(), META_ACCOUNTS_MIN_REQUEST_SECONDS)),
+            ).json()
+            if "error" in data:
+                raise APIError(error_message, platform=provider.platform_name, raw_response=data)
+            out.extend(data.get("data", []))
+            after = ((data.get("paging") or {}).get("cursors") or {}).get("after")
+            if not (data.get("paging") or {}).get("next") or not after:
+                break
+            params = {**params, "after": after}
+        return out
+
+    added = 0
+    try:
+        businesses = _walk(f"{base_url}/me/businesses", {"fields": "id", "limit": META_ACCOUNTS_PAGE_SIZE})
+    except Exception:  # noqa: BLE001 - optional edge, never fatal
+        logger.warning("%s business discovery unavailable (business_management missing?)", provider.platform_name)
+        businesses = []
+    for business in businesses:
+        for edge in ("owned_pages", "client_pages"):
+            try:
+                found = _walk(
+                    f"{base_url}/{business['id']}/{edge}",
+                    {"fields": fields, "limit": META_ACCOUNTS_PAGE_SIZE},
+                )
+            except Exception:  # noqa: BLE001
+                continue
+            for page in found:
+                pid = str(page.get("id") or "")
+                if not pid:
+                    continue
+                current = by_id.get(pid)
+                if current is None:
+                    by_id[pid] = page
+                    added += 1
+                elif not current.get("access_token") and page.get("access_token"):
+                    by_id[pid] = page
+    logger.warning(
+        "%s Meta discovery: me_accounts=%d businesses=%d business_only_pages=%d",
+        provider.platform_name,
+        len(pages),
+        len(businesses),
+        added,
+    )
+    return list(by_id.values())
+
+
 def page_can_publish(page: dict) -> bool:
     """Whether the grant lets us create content on this Page.
 

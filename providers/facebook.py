@@ -8,7 +8,7 @@ from urllib.parse import urlencode, urlparse
 
 from .base import SocialProvider
 from .exceptions import APIError, OAuthError, ProviderError, PublishError
-from .meta_accounts import fetch_me_accounts, page_can_publish
+from .meta_accounts import fetch_pages_with_business_fallback, page_can_publish
 from .meta_comments import parse_graph_time
 from .meta_insights import fetch_insights_safe, parse_insights_response
 from .meta_messaging import (
@@ -147,6 +147,10 @@ class FacebookProvider(SocialProvider):
             # behind pages_manage_engagement.
             "pages_manage_engagement",
             "pages_manage_posts",
+            # Postiz parity: needed to read Page posts/engagement and to list
+            # Pages reliably. "Invalid Scopes" means the Meta app lacks the
+            # matching Use Case — fix it in the dashboard, not by dropping it.
+            "pages_read_engagement",
             "pages_read_user_content",
         ]
         if self.include_analytics_scopes:
@@ -269,7 +273,7 @@ class FacebookProvider(SocialProvider):
         Returns a list of dicts each containing id, name, access_token,
         category, and picture.
         """
-        raw_pages = fetch_me_accounts(
+        raw_pages = fetch_pages_with_business_fallback(
             self,
             access_token=access_token,
             base_url=BASE_URL,
