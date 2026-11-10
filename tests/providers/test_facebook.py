@@ -357,9 +357,9 @@ def test_facebook_login_for_business_uses_config_id_instead_of_scope():
     assert query["config_id"] == ["business-config-1"]
     assert query["override_default_response_type"] == ["true"]
     assert "scope" not in query
-    # Login for Business changes where the permission list comes from, not
-    # whether a declined permission can be re-asked for.
-    assert query["auth_type"] == ["rerequest"]
+    # A Business Login configuration owns its permission prompt. ``auth_type``
+    # is a legacy rererequest flag and must not be mixed with ``config_id``.
+    assert "auth_type" not in query
 
 
 def test_facebook_auth_url_falls_back_to_scope_without_a_config_id():

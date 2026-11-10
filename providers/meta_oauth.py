@@ -39,7 +39,6 @@ def facebook_login_params(
         "redirect_uri": redirect_uri,
         "state": state,
         "response_type": "code",
-        **FACEBOOK_LOGIN_EXTRA_PARAMS,
     }
     if config_id:
         params["config_id"] = config_id
@@ -47,5 +46,8 @@ def facebook_login_params(
         # the code flow the callback is built around.
         params["override_default_response_type"] = "true"
     else:
+        # ``rerequest`` is a Classic Facebook Login parameter. Meta's Business
+        # Login configuration owns the permission interaction.
+        params.update(FACEBOOK_LOGIN_EXTRA_PARAMS)
         params["scope"] = ",".join(scopes)
     return params

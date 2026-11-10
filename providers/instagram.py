@@ -51,7 +51,8 @@ from .types import (
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://graph.facebook.com/v25.0"
-OAUTH_URL = "https://www.facebook.com/v25.0/dialog/oauth"
+# Facebook-hosted Instagram login uses the current Business Login dialog.
+OAUTH_URL = "https://www.facebook.com/dialog/oauth"
 TOKEN_URL = f"{BASE_URL}/oauth/access_token"
 # Subscribed on the Instagram user, NOT on the linked Facebook Page. These are
 # fields of Meta's *Instagram* webhook object; a Page accepts only its own

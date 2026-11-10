@@ -38,7 +38,8 @@ from .types import (
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://graph.facebook.com/v25.0"
-OAUTH_URL = "https://www.facebook.com/v25.0/dialog/oauth"
+# Facebook Login for Business documents the unversioned dialog endpoint.
+OAUTH_URL = "https://www.facebook.com/dialog/oauth"
 TOKEN_URL = f"{BASE_URL}/oauth/access_token"
 # Webhook fields we subscribe a connected Page to. ``feed`` carries comments on
 # the Page's posts, ``mention`` carries mentions of the Page, ``messages``
