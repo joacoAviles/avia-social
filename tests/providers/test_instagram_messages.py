@@ -37,7 +37,7 @@ def test_oauth_requests_message_permission_by_default_with_explicit_opt_out(flag
     assert "instagram_manage_messages" in instance.required_scopes
     omitted = {"instagram_manage_messages"} if flag in (False, "false") else set()
     assert set(scopes) == set(instance.required_scopes) - omitted
-    assert "pages_manage_metadata" in scopes
+    assert "pages_manage_metadata" not in scopes
 
 
 @pytest.mark.parametrize("flag", [False, True])

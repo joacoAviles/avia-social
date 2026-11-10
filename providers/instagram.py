@@ -149,8 +149,6 @@ class InstagramProvider(SocialProvider):
             "instagram_manage_insights",
             "instagram_manage_messages",
             "pages_show_list",
-            "pages_read_engagement",
-            "pages_manage_metadata",
         ]
 
     @property

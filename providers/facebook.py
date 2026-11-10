@@ -147,10 +147,7 @@ class FacebookProvider(SocialProvider):
             # behind pages_manage_engagement.
             "pages_manage_engagement",
             "pages_manage_posts",
-            "pages_read_engagement",
             "pages_read_user_content",
-            "pages_manage_metadata",
-            "pages_messaging",
         ]
         if self.include_analytics_scopes:
             scopes.extend(self.analytics_only_scopes)
