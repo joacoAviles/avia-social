@@ -142,3 +142,23 @@ def test_csp_allows_regional_facebook_hosts(settings):
     # Chile is redirected to web.facebook.com; form-action covers redirects.
     assert "https://*.facebook.com" in settings.CSP_FORM_ACTION
     assert "https://*.instagram.com" in settings.CSP_FORM_ACTION
+
+
+def test_inbox_sync_reads_do_not_need_publish_switch(settings):
+    # 0.3.2: with AVIA_PUBLISH_ENABLED off the inbox poll raised for every account.
+    import inspect
+
+    from apps.inbox import tasks
+
+    assert "_resolve_publish_credentials(account, read_only=True)" in inspect.getsource(
+        tasks.InboxSyncEngine._sync_account
+    )
+
+
+@pytest.mark.django_db
+def test_banner_warns_when_publishing_is_disabled(authenticated_client, workspace, settings):
+    url = reverse("inbox:feed", kwargs={"workspace_id": workspace.id})
+    settings.AVIA_PUBLISH_ENABLED = False
+    assert "Publicación desactivada en esta instalación" in authenticated_client.get(url).content.decode()
+    settings.AVIA_PUBLISH_ENABLED = True
+    assert "Publicación desactivada en esta instalación" not in authenticated_client.get(url).content.decode()

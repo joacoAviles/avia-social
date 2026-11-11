@@ -334,7 +334,7 @@ class InboxSyncEngine:
             return
 
         try:
-            credentials = _resolve_publish_credentials(account)
+            credentials = _resolve_publish_credentials(account, read_only=True)
             if account.platform == "instagram":
                 credentials["instagram_dm_poll_state"] = account.instagram_dm_poll_state
             provider = get_provider(account.platform, credentials)

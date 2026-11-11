@@ -17,6 +17,12 @@ Objetivo: que la primera cuenta de Facebook/Instagram se conecte. Se reemplazó 
 
 - CSP `form-action` permite `*.facebook.com` e `*.instagram.com`. En Chile Meta redirige el diálogo a `web.facebook.com` y Chromium bloqueaba el formulario «Conectar» sin mostrar error.
 
+## 0.3.2
+
+- La bandeja ya no depende de `AVIA_PUBLISH_ENABLED`: con el interruptor apagado, la sincronización de comentarios y mensajes fallaba en silencio para todas las cuentas.
+- Aviso visible en todas las pantallas cuando la publicación está desactivada (antes las publicaciones quedaban en «Scheduled» sin explicación).
+- Permiso de Messenger (`pages_messaging`) separado de la bandeja de Instagram.
+
 ## Actualizar desde 0.2
 
 ```sh

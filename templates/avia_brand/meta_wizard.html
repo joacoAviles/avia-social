@@ -14,7 +14,7 @@
 <li>«Administrar todo en tu página» → Personalizar → pulsa <em>Agregar</em> en <code>pages_show_list</code>, <code>pages_manage_posts</code>, <code>pages_manage_engagement</code>, <code>pages_read_engagement</code>, <code>pages_read_user_content</code>, <code>read_insights</code>, <code>business_management</code>{% if meta.inbox_enabled %}, <code>pages_manage_metadata</code>{% endif %}.</li>
 <li>«Administrar mensajes y contenido en Instagram» → <strong>Configuración de la API con inicio de sesión de Facebook</strong> → agrega <code>instagram_basic</code>, <code>instagram_content_publish</code>, <code>instagram_manage_comments</code>, <code>instagram_manage_insights</code>{% if meta.inbox_enabled %}, <code>instagram_manage_messages</code>{% endif %}.</li>
 <li>Opcional, Instagram directo: en el mismo caso de uso → <strong>Configuración de la API con inicio de sesión de Instagram</strong> → copia el <em>ID de la app de Instagram</em> y su secreto.</li>
-{% if meta.inbox_enabled %}<li>Bandeja de Messenger: agrega «Interactuar con clientes en Messenger» y <code>pages_messaging</code>.</li>{% endif %}
+{% if meta.messenger_enabled %}<li>Messenger: agrega «Interactuar con clientes en Messenger» y <code>pages_messaging</code>.</li>{% endif %}
 </ul></li>
 <li><strong>Configuración de la app → Básica</strong>: completa <em>Dominios de la app</em> con <code>{{ meta.origin }}</code>, Política de privacidad <code>{{ meta.origin }}/privacy/</code>, Términos <code>{{ meta.origin }}/terms/</code>. Copia <strong>App ID</strong> y <strong>App Secret</strong>.</li>
 <li><strong>Inicio de sesión con Facebook → Configuración</strong>: activa «Inicio de sesión con OAuth web» y «Forzar HTTPS», y pega en <em>URI de redireccionamiento de OAuth válidos</em> estas dos líneas exactas:
@@ -36,7 +36,9 @@
 {% for e in meta_form.meta_app_id.errors %}<p class="journey-error">{{ e }}</p>{% endfor %}
 <label for="meta-app-secret">Meta App Secret{% if meta.meta_configured %} · deja vacío para conservarlo{% endif %}</label><input id="meta-app-secret" name="meta_app_secret" type="password" maxlength="200" autocomplete="new-password">
 {% for e in meta_form.meta_app_secret.errors %}<p class="journey-error">{{ e }}</p>{% endfor %}
-<label><input type="checkbox" name="inbox_scopes_enabled" {% if meta.inbox_enabled %}checked{% endif %}> Pedir permisos de bandeja (DMs y webhooks). Actívalo solo después de agregar los casos de uso de mensajes; si no, Meta muestra «Invalid Scopes».</label>
+<label><input type="checkbox" name="inbox_scopes_enabled" {% if meta.inbox_enabled %}checked{% endif %}> Bandeja: mensajes directos de Instagram y avisos en tiempo real (pide <code>instagram_manage_messages</code> y <code>pages_manage_metadata</code>).</label>
+<label><input type="checkbox" name="messenger_scopes_enabled" {% if meta.messenger_enabled %}checked{% endif %}> Messenger de la página (pide <code>pages_messaging</code>). Actívalo solo si tu app de Meta tiene el caso de uso de Messenger; si no, Meta muestra «Invalid Scopes».</label>
+<p class="journey-note">Después de cambiar estas casillas hay que volver a pulsar Conectar en cada canal.</p>
 </fieldset>
 <fieldset><legend>Instagram directo · opcional, sin página de Facebook</legend>
 <label for="ig-app-id">Instagram App ID (no es el Meta App ID)</label><input id="ig-app-id" name="instagram_app_id" inputmode="numeric" pattern="[0-9]+" maxlength="30" autocomplete="off" value="{{ meta_form.instagram_app_id.value|default:meta.instagram_app_id }}">

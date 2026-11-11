@@ -221,7 +221,7 @@ class TestLinkedInPersonalOidcGate:
         monkeypatch.setattr(
             engine,
             "_resolve_publish_credentials",
-            lambda account: {"_oauth_mode": "oidc"},
+            lambda account, **kwargs: {"_oauth_mode": "oidc"},
         )
         body = client.get("/api/v1/me/").json()
         acc = next(a for a in body["allowlisted_accounts"] if a["platform"] == "linkedin_personal")
@@ -233,7 +233,7 @@ class TestLinkedInPersonalOidcGate:
         monkeypatch.setattr(
             engine,
             "_resolve_publish_credentials",
-            lambda account: {"_oauth_mode": "community_management", "access_token": "stub"},
+            lambda account, **kwargs: {"_oauth_mode": "community_management", "access_token": "stub"},
         )
         body = client.get("/api/v1/me/").json()
         acc = next(a for a in body["allowlisted_accounts"] if a["platform"] == "linkedin_personal")

@@ -188,8 +188,14 @@ class FacebookProvider(SocialProvider):
     @property
     def oauth_scopes(self) -> list[str]:
         scopes = list(self.required_scopes)
-        if self.inbox_scopes_enabled:
-            scopes += [s for s in ("pages_manage_metadata", "pages_messaging") if s not in scopes]
+        if self.inbox_scopes_enabled and "pages_manage_metadata" not in scopes:
+            scopes.append("pages_manage_metadata")
+        # Messenger DMs live in a separate Meta use case; asked for on its own
+        # switch so comments/webhooks work without it.
+        from .meta_messaging import enabled
+
+        if enabled(self.credentials.get("messenger_scopes_enabled", False)) and "pages_messaging" not in scopes:
+            scopes.append("pages_messaging")
         return scopes
 
     def get_auth_url(self, redirect_uri: str, state: str, code_verifier: str | None = None) -> str:

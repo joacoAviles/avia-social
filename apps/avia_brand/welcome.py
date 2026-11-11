@@ -86,6 +86,7 @@ class MetaAppForm(forms.Form):
         label="Instagram App Secret", widget=forms.PasswordInput, max_length=200, required=False
     )
     inbox_scopes_enabled = forms.BooleanField(label="Pedir permisos de bandeja de mensajes", required=False)
+    messenger_scopes_enabled = forms.BooleanField(label="Pedir permiso de Messenger", required=False)
 
     def __init__(self, *args, stored=None, **kwargs):
         # ``stored`` = {"meta": (id, secret), "ig": (id, secret)} so an admin can
@@ -133,6 +134,7 @@ def save_meta_credentials(organization, data) -> list[str]:
                 client_id=data["meta_app_id"],
                 client_secret=data["meta_app_secret"],
                 inbox_scopes_enabled=bool(data.get("inbox_scopes_enabled")),
+                messenger_scopes_enabled=bool(data.get("messenger_scopes_enabled")),
             )
             if platform == "instagram":
                 creds["dm_oauth_scopes_enabled"] = bool(data.get("inbox_scopes_enabled"))
@@ -556,5 +558,6 @@ def _meta_context(request, workspace):
         "instagram_configured": bool(creds.get("instagram_login", {}).get("client_id")),
         "instagram_app_id": str(creds.get("instagram_login", {}).get("client_id", "")),
         "inbox_enabled": bool(fb.get("inbox_scopes_enabled")),
+        "messenger_enabled": bool(fb.get("messenger_scopes_enabled")),
         "has_legacy_config_id": any(c.get("config_id") for c in creds.values()),
     }

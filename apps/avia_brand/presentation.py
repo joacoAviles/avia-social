@@ -95,4 +95,10 @@ def ui_brand(request):
         google_configured = google_configured or bool(state and state.google_credentials)
     except (OperationalError, ProgrammingError):
         pass
-    return {"avia_ui_tokens": values, "avia_ui_configured": bool(values), "avia_google_configured": google_configured}
+    return {
+        "avia_ui_tokens": values,
+        "avia_ui_configured": bool(values),
+        "avia_google_configured": google_configured,
+        # Shown as a banner: with the switch off, scheduled posts stay "Scheduled" forever.
+        "avia_publish_enabled": bool(getattr(settings, "AVIA_PUBLISH_ENABLED", True)),
+    }

@@ -907,7 +907,7 @@ def disconnect(request, workspace_id, account_id):
         from apps.publisher.engine import _resolve_publish_credentials
         from providers import get_provider
 
-        provider = get_provider(account.platform, _resolve_publish_credentials(account))
+        provider = get_provider(account.platform, _resolve_publish_credentials(account, read_only=True))
         if account.revocation_token:
             provider.revoke_token(account.revocation_token)
     except Exception:

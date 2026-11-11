@@ -363,8 +363,12 @@ def test_facebook_ignores_stored_config_id_and_uses_classic_login():
 def test_facebook_inbox_scopes_only_when_enabled():
     off = FacebookProvider({"client_id": "id", "client_secret": "s"})
     on = FacebookProvider({"client_id": "id", "client_secret": "s", "inbox_scopes_enabled": True})
+    both = FacebookProvider(
+        {"client_id": "id", "client_secret": "s", "inbox_scopes_enabled": True, "messenger_scopes_enabled": True}
+    )
     assert "pages_messaging" not in off.oauth_scopes
-    assert {"pages_messaging", "pages_manage_metadata"} <= set(on.oauth_scopes)
+    assert "pages_manage_metadata" in on.oauth_scopes and "pages_messaging" not in on.oauth_scopes
+    assert {"pages_messaging", "pages_manage_metadata"} <= set(both.oauth_scopes)
 
 
 def test_facebook_auth_url_falls_back_to_scope_without_a_config_id():

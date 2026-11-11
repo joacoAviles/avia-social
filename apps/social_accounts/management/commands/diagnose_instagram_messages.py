@@ -28,7 +28,7 @@ class Command(BaseCommand):
             )
         except (SocialAccount.DoesNotExist, ValueError, ValidationError) as exc:
             raise CommandError("No Facebook Login Instagram account matched.") from exc
-        provider = get_provider("instagram", _resolve_publish_credentials(account))
+        provider = get_provider("instagram", _resolve_publish_credentials(account, read_only=True))
         checks = []
 
         def check(name, ok, detail):

@@ -55,7 +55,7 @@ class Command(BaseCommand):
 
         for account in accounts:
             try:
-                provider = get_provider(account.platform, _resolve_publish_credentials(account))
+                provider = get_provider(account.platform, _resolve_publish_credentials(account, read_only=True))
                 # Explicit history seeding is the one caller that must not
                 # stop early: the routine poll's cutoff and its 5-page cap exist
                 # to protect a daily budget across hundreds of automatic polls,

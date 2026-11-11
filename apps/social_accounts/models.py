@@ -540,7 +540,7 @@ class SocialAccount(models.Model):
         if self.platform == "linkedin_personal":
             from apps.publisher.engine import _resolve_publish_credentials
 
-            creds = _resolve_publish_credentials(self)
+            creds = _resolve_publish_credentials(self, read_only=True)
             if creds.get("_oauth_mode", "oidc") == "oidc":
                 return False
         return True
