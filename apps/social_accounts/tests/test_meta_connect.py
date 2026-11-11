@@ -156,9 +156,15 @@ def test_inbox_sync_reads_do_not_need_publish_switch(settings):
 
 
 @pytest.mark.django_db
-def test_banner_warns_when_publishing_is_disabled(authenticated_client, workspace, settings):
+def test_paused_notice_is_admin_only_and_has_no_backend_details(authenticated_client, workspace, settings):
+    from django.contrib.auth import get_user_model
+
     url = reverse("inbox:feed", kwargs={"workspace_id": workspace.id})
     settings.AVIA_PUBLISH_ENABLED = False
-    assert "Publicación desactivada en esta instalación" in authenticated_client.get(url).content.decode()
+    html = authenticated_client.get(url).content.decode()
+    assert "en pausa en esta instalación" not in html and "AVIA_PUBLISH_ENABLED" not in html
+    get_user_model().objects.update(is_superuser=True)
+    html = authenticated_client.get(url).content.decode()
+    assert "en pausa en esta instalación" in html and "AVIA_PUBLISH_ENABLED" not in html
     settings.AVIA_PUBLISH_ENABLED = True
-    assert "Publicación desactivada en esta instalación" not in authenticated_client.get(url).content.decode()
+    assert "en pausa en esta instalación" not in authenticated_client.get(url).content.decode()
