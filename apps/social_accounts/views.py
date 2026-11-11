@@ -26,6 +26,7 @@ from apps.credentials.models import PlatformCredential, derive_is_configured
 from apps.members.decorators import require_permission
 from providers.exceptions import QuotaExceededError
 
+from . import meta_connect
 from .error_messages import quota_connect_error
 from .models import MastodonAppRegistration, PlatformVisibility, SocialAccount
 from .oauth_aliases import from_url_slug, redirect_uri_from_request, to_url_slug
@@ -91,8 +92,10 @@ def _build_redirect_uri(request, platform):
     """
     from django.urls import reverse
 
+    from apps.common.public_url import public_url
+
     url_slug = to_url_slug(platform)
-    return request.build_absolute_uri(reverse("social_accounts:oauth_callback", kwargs={"platform": url_slug}))
+    return public_url(request, reverse("social_accounts:oauth_callback", kwargs={"platform": url_slug}))
 
 
 def _sign_state(workspace_id, platform, user_id, nonce):
@@ -283,8 +286,15 @@ def oauth_callback(request, platform):
     platform = from_url_slug(platform)
     error = request.GET.get("error")
     if error:
+        from .meta_connect import explain_error
+
         error_desc = request.GET.get("error_description", error)
-        messages.error(request, f"OAuth error: {error_desc}")
+        if request.GET.get("error_reason") == "user_denied" or error == "access_denied":
+            messages.error(
+                request, "Cancelaste la autorización o no aceptaste los permisos. Pulsa Conectar otra vez y acepta."
+            )
+        else:
+            messages.error(request, explain_error(error_desc))
         session_data = request.session.pop(OAUTH_SESSION_KEY, {})
         workspace_id = session_data.get("workspace_id")
         if workspace_id:
@@ -350,6 +360,15 @@ def oauth_callback(request, platform):
             PlatformCredential.Platform.LINKEDIN_COMPANY,
         ) and hasattr(provider, "get_user_pages"):
             tokens, promoted = promote_meta_user_token(provider, platform, tokens)
+            granted = None
+            if platform in meta_connect.META_PLATFORMS:
+                perms = meta_connect.user_token_permissions(provider, tokens.access_token)
+                if perms is not None:
+                    granted, declined = perms
+                    missing = meta_connect.missing_essentials(platform, granted)
+                    if missing:
+                        messages.error(request, meta_connect.missing_permissions_message(platform, missing, declined))
+                        return _after_connect_redirect(workspace_id, "social_accounts:list")
             pages = provider.get_user_pages(tokens.access_token)
             if pages:
                 # Filtered by workspace only: that set is bounded by what this
@@ -398,24 +417,10 @@ def oauth_callback(request, platform):
                 else:
                     if platform == PlatformCredential.Platform.INSTAGRAM_UNIFIED:
                         warning = "Meta completó el inicio de sesión, pero su API devolvió cero cuentas de Instagram asignadas. No se vinculó ninguna cuenta. Comprueba que la configuración elegida tenga la etiqueta «Compatible con el inicio de sesión con Instagram» y que el diálogo incluya tu cuenta. No necesitas eliminar permisos adicionales ni cambiar la caducidad del token."
-                    elif platform == PlatformCredential.Platform.INSTAGRAM:
-                        warning = (
-                            "No Instagram Business accounts were found for your account. "
-                            "Only Instagram Business or Creator accounts linked to a Facebook Page "
-                            "can be connected through this Instagram option. If you expected to "
-                            "see an account, make sure it is linked to a Page you manage, then reconnect."
-                        )
                     else:
-                        warning = (
-                            "No Facebook Pages were found for your account. "
-                            "Only Pages can be connected — personal profiles are not "
-                            "supported by the Facebook API. "
-                            "If you expected to see a Page, make sure you have admin "
-                            "access and try removing the app in Facebook Settings \u2192 "
-                            "Business Integrations, then reconnect."
-                        )
+                        warning = meta_connect.empty_discovery_message(platform, granted)
                 messages.warning(request, warning)
-                return redirect("social_accounts:list", workspace_id=workspace_id)
+                return _after_connect_redirect(workspace_id, "social_accounts:list")
 
         # Standard single-account flow (non-Facebook/Instagram platforms)
         profile = provider.get_profile(tokens.access_token)
@@ -445,14 +450,21 @@ def oauth_callback(request, platform):
         logger.warning("OAuth callback failed for %s (%s)", platform, type(exc).__name__)
         messages.error(
             request,
-            "Failed to connect account. Please try again.",
+            meta_connect.explain_error(exc)
+            if meta_connect.is_provider_error(exc)
+            else "No se pudo conectar la cuenta. Intenta de nuevo.",
         )
 
+    return _after_connect_redirect(workspace_id)
+
+
+def _after_connect_redirect(workspace_id, fallback="calendar:calendar"):
+    """Back to the connections step while onboarding, else to ``fallback``."""
     from apps.avia_brand.models import WelcomeProgress
 
     if WelcomeProgress.objects.filter(workspace_id=workspace_id, completed_at__isnull=True).exists():
         return redirect(reverse("welcome:journey", args=[workspace_id]) + "?step=connections")
-    return redirect("calendar:calendar", workspace_id=workspace_id)
+    return redirect(fallback, workspace_id=workspace_id)
 
 
 # ------------------------------------------------------------------

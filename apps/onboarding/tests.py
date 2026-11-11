@@ -48,13 +48,12 @@ def test_instagram_connection_link_uses_dm_scope_flag(client, connection_link, s
     query = parse_qs(urlparse(response.url).query)
     assert query["client_id"] == ["ID"]
     assert query["response_type"] == ["code"]
-    if business_login:
-        assert query["config_id"] == ["config-1"]
-        assert "scope" not in query
-    else:
-        scopes = query["scope"][0].split(",")
-        assert ("instagram_manage_messages" in scopes) is flag
-        assert {"pages_manage_metadata", "instagram_content_publish", "instagram_manage_comments"} <= set(scopes)
+    # AVIA 0.3: classic Facebook Login always; a stored config_id is ignored.
+    assert "config_id" not in query
+    scopes = query["scope"][0].split(",")
+    assert ("instagram_manage_messages" in scopes) is flag
+    assert ("pages_manage_metadata" in scopes) is flag
+    assert {"instagram_content_publish", "instagram_manage_comments"} <= set(scopes)
 
 
 @pytest.mark.django_db

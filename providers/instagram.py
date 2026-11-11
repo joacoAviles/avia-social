@@ -51,8 +51,7 @@ from .types import (
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://graph.facebook.com/v25.0"
-# Facebook-hosted Instagram login uses the current Business Login dialog.
-OAUTH_URL = "https://www.facebook.com/dialog/oauth"
+OAUTH_URL = "https://www.facebook.com/v25.0/dialog/oauth"
 TOKEN_URL = f"{BASE_URL}/oauth/access_token"
 # Subscribed on the Instagram user, NOT on the linked Facebook Page. These are
 # fields of Meta's *Instagram* webhook object; a Page accepts only its own
@@ -167,11 +166,15 @@ class InstagramProvider(SocialProvider):
         Keep required_scopes complete: grant readback and existing DM access
         must continue to depend on the token, not this permission-request setting.
         """
-        return [
+        scopes = [
             scope
             for scope in self.required_scopes
             if scope != "instagram_manage_messages" or self.dm_oauth_scopes_enabled
         ]
+        if self.dm_oauth_scopes_enabled and "pages_manage_metadata" not in scopes:
+            # Instagram webhooks for comments/DMs are subscribed through the Page.
+            scopes.append("pages_manage_metadata")
+        return scopes
 
     @property
     def rate_limits(self) -> RateLimitConfig:
@@ -192,7 +195,6 @@ class InstagramProvider(SocialProvider):
             redirect_uri=redirect_uri,
             state=state,
             scopes=self.oauth_scopes,
-            config_id=str(self.credentials.get("config_id") or "").strip(),
         )
         return f"{OAUTH_URL}?{urlencode(params)}"
 

@@ -348,18 +348,23 @@ def test_get_user_pages_treats_explicit_empty_tasks_as_non_publishable():
     assert pages[0]["can_publish"] is False
 
 
-def test_facebook_login_for_business_uses_config_id_instead_of_scope():
+def test_facebook_ignores_stored_config_id_and_uses_classic_login():
+    # AVIA 0.3: Login for Business configurations broke own-business installs.
     provider = FacebookProvider({"client_id": "id", "client_secret": "secret", "config_id": "business-config-1"})
 
-    url = provider.get_auth_url("https://studio.example/callback", "state-1")
-    query = parse_qs(urlparse(url).query)
+    query = parse_qs(urlparse(provider.get_auth_url("https://studio.example/callback", "state-1")).query)
 
-    assert query["config_id"] == ["business-config-1"]
-    assert query["override_default_response_type"] == ["true"]
-    assert "scope" not in query
-    # A Business Login configuration owns its permission prompt. ``auth_type``
-    # is a legacy rererequest flag and must not be mixed with ``config_id``.
-    assert "auth_type" not in query
+    assert "config_id" not in query
+    assert "override_default_response_type" not in query
+    assert query["auth_type"] == ["rerequest"]
+    assert query["scope"][0].split(",") == provider.required_scopes
+
+
+def test_facebook_inbox_scopes_only_when_enabled():
+    off = FacebookProvider({"client_id": "id", "client_secret": "s"})
+    on = FacebookProvider({"client_id": "id", "client_secret": "s", "inbox_scopes_enabled": True})
+    assert "pages_messaging" not in off.oauth_scopes
+    assert {"pages_messaging", "pages_manage_metadata"} <= set(on.oauth_scopes)
 
 
 def test_facebook_auth_url_falls_back_to_scope_without_a_config_id():

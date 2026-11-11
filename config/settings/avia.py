@@ -17,6 +17,8 @@ INTELLIGENCE_ENABLED = False
 EMAIL_SENDING_ENABLED = False
 
 # Redirect local HTTP entry points to the canonical public host when HTTPS is enabled.
+# OAuth callbacks are built from APP_URL once HTTPS is on (proxy-proof redirect_uri).
+OAUTH_PUBLIC_BASE_URL = APP_URL.rstrip("/") if SECURE_SSL_REDIRECT else ""  # noqa: F405
 SECURE_SSL_HOST = urlsplit(APP_URL).netloc if SECURE_SSL_REDIRECT else None  # noqa: F405
 # Only this installation's origin; no wildcard cross-origin trust.
 CSRF_TRUSTED_ORIGINS = [APP_URL.rstrip("/")] if SECURE_SSL_REDIRECT else []  # noqa: F405

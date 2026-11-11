@@ -234,14 +234,19 @@ def test_a_grant_that_no_longer_reaches_the_channel_stops_the_inbox(channel):
 
 
 def test_history_keeps_180_days_and_drops_arbitrary_old_response_payloads(channel):
+    from zoneinfo import ZoneInfo
+
     now = timezone.now()
+    # Retention is counted in YouTube Analytics' Pacific calendar, not UTC: using
+    # now.date() made this test fail between 00:00 and 08:00 UTC.
+    today = now.astimezone(ZoneInfo("America/Los_Angeles")).date()
     old = AccountInsightsSnapshot.objects.create(
-        social_account=channel, metric_key="views", date=now.date() - timedelta(days=181), value=4
+        social_account=channel, metric_key="views", date=today - timedelta(days=181), value=4
     )
     retained = AccountInsightsSnapshot.objects.create(
         social_account=channel,
         metric_key="views",
-        date=now.date() - timedelta(days=179),
+        date=today - timedelta(days=179),
         value=3,
         raw={"source": "youtube_analytics", "copied_profile": "Old"},
     )

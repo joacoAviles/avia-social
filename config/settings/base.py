@@ -21,6 +21,7 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 APP_URL = env("APP_URL")
+OAUTH_PUBLIC_BASE_URL = env("OAUTH_PUBLIC_BASE_URL", default="")
 
 # Application definition
 

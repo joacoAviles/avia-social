@@ -146,8 +146,14 @@ def resolve_platform_credentials(platform, org_id):
             credentials = dict(env_creds)
     if platform == "instagram" and credentials:
         # This deployment switch applies to every OAuth entry point, including
-        # org-owned apps. Stored credentials cannot override an operator's opt-out.
-        credentials["dm_oauth_scopes_enabled"] = settings.PLATFORM_INSTAGRAM_FACEBOOK_DM_SCOPES_ENABLED
+        # org-owned apps. Stored credentials cannot override an operator's opt-out,
+        # but an org can opt out itself (AVIA 0.3 Meta wizard "bandeja" toggle).
+        from providers.meta_messaging import enabled
+
+        credentials["dm_oauth_scopes_enabled"] = bool(
+            settings.PLATFORM_INSTAGRAM_FACEBOOK_DM_SCOPES_ENABLED
+            and enabled(credentials.get("dm_oauth_scopes_enabled", True))
+        )
     return credentials
 
 

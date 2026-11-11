@@ -49,4 +49,6 @@ def redirect_uri_from_request(request) -> str:
     the deploy would otherwise rebuild to the new path and fail TikTok's
     exact-match check.
     """
-    return request.build_absolute_uri(request.path)
+    from apps.common.public_url import public_url
+
+    return public_url(request, request.path)

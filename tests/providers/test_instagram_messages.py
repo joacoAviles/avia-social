@@ -36,20 +36,20 @@ def test_oauth_requests_message_permission_by_default_with_explicit_opt_out(flag
     scopes = parse_qs(urlparse(instance.get_auth_url("https://example.com/cb", "s")).query)["scope"][0].split(",")
     assert "instagram_manage_messages" in instance.required_scopes
     omitted = {"instagram_manage_messages"} if flag in (False, "false") else set()
-    assert set(scopes) == set(instance.required_scopes) - omitted
-    assert "pages_manage_metadata" not in scopes
+    assert set(scopes) - {"pages_manage_metadata"} == set(instance.required_scopes) - omitted
+    # Page webhooks for DMs need pages_manage_metadata, requested only with DMs.
+    assert ("pages_manage_metadata" in scopes) is (flag not in (False, "false"))
 
 
 @pytest.mark.parametrize("flag", [False, True])
-def test_business_login_preserves_its_configuration_in_both_flag_states(flag):
+def test_stored_config_id_is_ignored_in_both_flag_states(flag):
     instance = provider()
     instance.credentials["dm_oauth_scopes_enabled"] = flag
     instance.credentials["config_id"] = "config-1"
     query = parse_qs(urlparse(instance.get_auth_url("https://example.com/cb", "s")).query)
-    assert query["config_id"] == ["config-1"]
-    assert "scope" not in query
+    assert "config_id" not in query
+    assert "scope" in query
     assert query["response_type"] == ["code"]
-    assert query["override_default_response_type"] == ["true"]
 
 
 @pytest.mark.parametrize("flag", [False, True])

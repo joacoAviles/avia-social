@@ -60,105 +60,94 @@ def test_picker_rejects_ungranted_asset(session):
     assert not SocialAccount.objects.filter(workspace=workspace).exists()
 
 
-def test_instagram_facebook_setup_and_guide(session):
-    client, workspace, url = session
-    response = client.post(
-        url,
-        {
-            "action": "credentials",
-            "platform": "instagram",
-            "meta_flow": "facebook_user",
-            "client_id": "demo",
-            "client_secret": "synthetic",
-            "config_id": "1234",
-        },
-        HTTP_HOST="localhost",
-    )
-    assert response.status_code == 302
-    row = PlatformCredential.objects.get(organization=workspace.organization, platform="instagram")
-    assert row.credentials["config_id"] == "1234"
-    content = client.get(url + "?step=connections&configure=instagram").content.decode()
-    assert "Elige todas tus cuentas" in content
-    assert "synthetic" not in content
+def _meta(client, url, **data):
+    return client.post(url + "?step=connections&configure=meta", {"action": "meta", **data}, secure=True)
 
 
-def test_suat_does_not_overwrite_existing_credentials(session):
-    client, workspace, url = session
-    row = PlatformCredential.objects.create(
-        organization=workspace.organization,
-        platform="instagram",
-        credentials={"client_id": "existing", "client_secret": "preserved"},
+def test_meta_wizard_saves_one_app_for_facebook_and_instagram(session):
+    client, ws, url = session
+    response = _meta(client, url, meta_app_id="111111", meta_app_secret="synthetic-secret")
+    assert response.status_code == 302 and response.url.endswith("configure=meta")
+    for platform in ("facebook", "instagram"):
+        cred = PlatformCredential.objects.get(organization=ws.organization, platform=platform)
+        assert cred.credentials["client_id"] == "111111" and cred.is_configured
+        assert "config_id" not in cred.credentials
+    assert not PlatformCredential.objects.filter(organization=ws.organization, platform="instagram_login").exists()
+    html = client.get(url + "?step=connections&configure=meta", secure=True).content.decode()
+    assert "synthetic-secret" not in html
+    assert "/social-accounts/callback/facebook/" in html and "/social-accounts/callback/instagram/" in html
+    assert "Conectar Facebook Pages" in html and "Conectar Instagram vía Facebook" in html
+
+
+def test_meta_wizard_drops_legacy_config_id(session):
+    client, ws, url = session
+    PlatformCredential.objects.create(
+        organization=ws.organization,
+        platform="facebook",
+        credentials={"client_id": "111111", "client_secret": "old", "config_id": "999"},
     )
-    response = client.post(
+    html = client.get(url + "?step=connections&configure=facebook", secure=True).content.decode()
+    assert "Configuración anterior detectada" in html
+    _meta(client, url, meta_app_id="111111", meta_app_secret="new-secret")
+    cred = PlatformCredential.objects.get(organization=ws.organization, platform="facebook")
+    assert "config_id" not in cred.credentials and cred.credentials["client_secret"] == "new-secret"
+
+
+def test_meta_wizard_keeps_secret_when_left_blank(session):
+    client, ws, url = session
+    _meta(client, url, meta_app_id="111111", meta_app_secret="keep-me")
+    _meta(client, url, meta_app_id="111111", meta_app_secret="", inbox_scopes_enabled="on")
+    cred = PlatformCredential.objects.get(organization=ws.organization, platform="facebook")
+    assert cred.credentials["client_secret"] == "keep-me"
+    assert cred.credentials["inbox_scopes_enabled"] is True
+    assert (
+        PlatformCredential.objects.get(organization=ws.organization, platform="instagram").credentials[
+            "dm_oauth_scopes_enabled"
+        ]
+        is True
+    )
+
+
+def test_meta_wizard_rejects_instagram_id_equal_to_meta_id(session):
+    client, ws, url = session
+    response = _meta(
+        client,
         url,
-        {
-            "action": "credentials",
-            "platform": "instagram",
-            "meta_flow": "unified_suat",
-            "client_id": "different",
-            "client_secret": "new",
-            "config_id": "1234",
-        },
-        HTTP_HOST="localhost",
+        meta_app_id="111111",
+        meta_app_secret="a",
+        instagram_app_id="111111",
+        instagram_app_secret="b",
     )
     assert response.status_code == 200
-    row.refresh_from_db()
-    assert row.credentials["client_id"] == "existing"
+    assert "Es el mismo número que el Meta App ID" in response.content.decode()
+    assert not PlatformCredential.objects.filter(organization=ws.organization).exists()
 
 
-def test_unified_setup_requires_config_and_preserves_legacy(session):
-    client, workspace, url = session
-    payload = {
-        "action": "credentials",
-        "platform": "instagram_unified",
-        "meta_flow": "unified_suat",
-        "client_id": "demo",
-        "client_secret": "synthetic",
-    }
-    assert client.post(url, payload, HTTP_HOST="localhost").status_code == 200
-    assert not PlatformCredential.objects.filter(platform="instagram_unified").exists()
-    payload["config_id"] = "1234"
-    assert client.post(url, payload, HTTP_HOST="localhost").status_code == 302
-    assert PlatformCredential.objects.get(platform="instagram_unified").is_configured
+def test_meta_wizard_requires_some_credentials(session):
+    client, ws, url = session
+    response = _meta(client, url)
+    assert response.status_code == 200
+    assert "Ingresa al menos la app de Meta" in response.content.decode()
 
 
-def test_meta_invalid_form_without_query_keeps_visible_error(session):
-    client, workspace, url = session
-    result = client.post(
-        url.split("?")[0],
-        {
-            "action": "credentials",
-            "platform": "instagram_unified",
-            "meta_flow": "unified_suat",
-            "client_id": "demo",
-            "client_secret": "synthetic",
-        },
-        HTTP_HOST="localhost",
-    )
-    assert result.status_code == 200
-    assert result.context["step"] == "connections"
-    assert result.context["setup_provider"] == "instagram_unified"
-    assert b"Configuration ID es obligatorio" in result.content
-    assert b'name="meta_flow" value="unified_suat"' in result.content
-    assert b'value="synthetic"' not in result.content
+def test_meta_test_button_validates_pair(session):
+    client, ws, url = session
+    _meta(client, url, meta_app_id="111111", meta_app_secret="s")
+    with patch(
+        "apps.social_accounts.meta_connect.validate_meta_app",
+        return_value=(True, "Credenciales válidas para la app «AVIA»."),
+    ) as check:
+        response = client.post(url + "?step=connections&configure=meta", {"action": "meta_test"}, secure=True)
+    check.assert_called_once_with("111111", "s")
+    assert "Credenciales válidas para la app «AVIA»" in response.content.decode()
 
 
-def test_meta_saved_returns_to_login_step(session):
-    client, workspace, url = session
-    result = client.post(
-        url,
-        {
-            "action": "credentials",
-            "platform": "instagram_unified",
-            "meta_flow": "unified_suat",
-            "client_id": "demo",
-            "client_secret": "synthetic",
-            "config_id": "1234",
-        },
-        HTTP_HOST="localhost",
-    )
-    assert result.status_code == 302
-    assert "configure=instagram_unified&saved=1" in result.url
-    page = client.get(result.url)
-    assert "Aplicación preparada".encode() in page.content
-    assert b"Conectar Instagram" in page.content
+def test_meta_wizard_forbidden_for_non_admin(session):
+    client, ws, url = session
+    WorkspaceMembership.objects.filter(workspace=ws).update(workspace_role="editor")
+    from apps.members.models import OrgMembership
+
+    OrgMembership.objects.filter(organization=ws.organization).update(org_role="member")
+    response = _meta(client, url, meta_app_id="111111", meta_app_secret="s")
+    assert response.status_code == 403
+    assert not PlatformCredential.objects.filter(organization=ws.organization).exists()

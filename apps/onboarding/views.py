@@ -95,7 +95,9 @@ def _build_connection_redirect_uri(request, platform):
     see ``apps.social_accounts.oauth_aliases`` for the rationale.
     """
     url_slug = to_url_slug(platform)
-    return request.build_absolute_uri(reverse("onboarding:oauth_callback", kwargs={"platform": url_slug}))
+    from apps.common.public_url import public_url
+
+    return public_url(request, reverse("onboarding:oauth_callback", kwargs={"platform": url_slug}))
 
 
 def _check_rate_limit(token):
@@ -543,10 +545,14 @@ def connection_oauth_callback(request, platform):
             social_account=account,
         )
 
-    except Exception:
-        logger.exception("Connection link OAuth callback failed for %s", platform)
+    except Exception as exc:
+        from apps.social_accounts.meta_connect import explain_error, is_provider_error
+
+        logger.warning("Connection link OAuth callback failed for %s (%s)", platform, type(exc).__name__)
         # Store error in session to display on connection page
-        request.session["connection_link_error"] = "Failed to connect account. Please try again."
+        request.session["connection_link_error"] = (
+            explain_error(exc) if is_provider_error(exc) else "No se pudo conectar la cuenta. Intenta de nuevo."
+        )
 
     return redirect("onboarding:connection_page", token=token)
 

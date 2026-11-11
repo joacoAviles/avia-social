@@ -289,6 +289,19 @@ def test_resolve_incomplete_env_does_not_shadow_db(organization):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("org_flag", [False, True, None])
+def test_instagram_dm_scope_org_toggle_respected_when_deployment_allows(organization, settings, org_flag):
+    settings.PLATFORM_INSTAGRAM_FACEBOOK_DM_SCOPES_ENABLED = True
+    settings.PLATFORM_CREDENTIALS_FROM_ENV = {}
+    creds = {"app_id": "ID", "app_secret": "SECRET"}
+    if org_flag is not None:
+        creds["dm_oauth_scopes_enabled"] = org_flag
+    PlatformCredential.objects.create(organization=organization, platform="instagram", credentials=creds)
+    resolved = resolve_platform_credentials("instagram", organization.id)
+    assert resolved["dm_oauth_scopes_enabled"] is (org_flag is not False)
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("flag", [False, True])
 @pytest.mark.parametrize("source", ["env", "organization"])
 def test_instagram_dm_scope_flag_is_deployment_controlled(organization, settings, flag, source):
@@ -301,7 +314,9 @@ def test_instagram_dm_scope_flag_is_deployment_controlled(organization, settings
         PlatformCredential.objects.create(organization=organization, platform="instagram", credentials=stored)
 
     resolved = resolve_platform_credentials("instagram", organization.id)
-    assert resolved == {**stored, "dm_oauth_scopes_enabled": flag}
+    # The deployment switch is an opt-out the org cannot override; since 0.3 the
+    # org may also opt out itself (Meta wizard "bandeja" toggle). Effective = AND.
+    assert resolved == {**stored, "dm_oauth_scopes_enabled": flag and stored["dm_oauth_scopes_enabled"]}
     assert stored["dm_oauth_scopes_enabled"] is not flag
     if source == "env":
         assert resolve_platform_credentials("facebook", organization.id) == stored

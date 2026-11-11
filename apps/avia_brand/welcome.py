@@ -21,6 +21,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_http_methods
 from django_ratelimit.decorators import ratelimit
 
+from apps.common.public_url import public_base_url, public_url
 from apps.credentials.models import PlatformCredential
 from apps.members.models import WorkspaceMembership
 from apps.social_accounts.oauth_aliases import to_url_slug
@@ -69,6 +70,85 @@ class CredentialForm(forms.Form):
             ("unified_suat", "Unified Login · token de usuario del sistema"),
         ],
     )
+
+
+class MetaAppForm(forms.Form):
+    """AVIA 0.3: one Meta app powers Facebook Pages and Instagram vía Facebook;
+    the optional Instagram app (same Meta app, Instagram-login use case) powers
+    Instagram directo. Classic login only — no config_id, no Unified/SUAT."""
+
+    meta_app_id = forms.RegexField(r"\A[0-9]{5,30}\Z", label="Meta App ID", required=False)
+    meta_app_secret = forms.CharField(
+        label="Meta App Secret", widget=forms.PasswordInput, max_length=200, required=False
+    )
+    instagram_app_id = forms.RegexField(r"\A[0-9]{5,30}\Z", label="Instagram App ID", required=False)
+    instagram_app_secret = forms.CharField(
+        label="Instagram App Secret", widget=forms.PasswordInput, max_length=200, required=False
+    )
+    inbox_scopes_enabled = forms.BooleanField(label="Pedir permisos de bandeja de mensajes", required=False)
+
+    def __init__(self, *args, stored=None, **kwargs):
+        # ``stored`` = {"meta": (id, secret), "ig": (id, secret)} so an admin can
+        # change the inbox toggle without retyping a secret Meta never shows twice.
+        self.stored = stored or {}
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        data = super().clean()
+        for prefix, key in (("meta_app", "meta"), ("instagram_app", "ig")):
+            stored_id, stored_secret = self.stored.get(key, ("", ""))
+            if data.get(f"{prefix}_id") and not data.get(f"{prefix}_secret") and str(stored_id) == data[f"{prefix}_id"]:
+                data[f"{prefix}_secret"] = stored_secret
+        meta = (data.get("meta_app_id"), data.get("meta_app_secret"))
+        ig = (data.get("instagram_app_id"), data.get("instagram_app_secret"))
+        if any(meta) and not all(meta):
+            self.add_error("meta_app_secret" if meta[0] else "meta_app_id", "Completa el par App ID / App Secret.")
+        if any(ig) and not all(ig):
+            self.add_error(
+                "instagram_app_secret" if ig[0] else "instagram_app_id", "Completa el par Instagram App ID / Secret."
+            )
+        if not any(meta) and not any(ig):
+            raise forms.ValidationError("Ingresa al menos la app de Meta o la app de Instagram.")
+        if all(meta) and all(ig) and meta[0] == ig[0]:
+            self.add_error(
+                "instagram_app_id",
+                "Es el mismo número que el Meta App ID. El Instagram App ID está en Casos de uso → Instagram → "
+                "Configuración de la API con inicio de sesión de Instagram.",
+            )
+        return data
+
+
+META_PLATFORMS = {"facebook", "instagram", "instagram_login", "instagram_unified"}
+
+
+def save_meta_credentials(organization, data) -> list[str]:
+    """Persist the Meta wizard. Existing secrets are replaced only for the pairs submitted."""
+    saved = []
+    if data.get("meta_app_id") and data.get("meta_app_secret"):
+        for platform in ("facebook", "instagram"):
+            existing = PlatformCredential.objects.filter(organization=organization, platform=platform).first()
+            creds = dict(existing.credentials) if existing else {}
+            creds.pop("config_id", None)
+            creds.update(
+                client_id=data["meta_app_id"],
+                client_secret=data["meta_app_secret"],
+                inbox_scopes_enabled=bool(data.get("inbox_scopes_enabled")),
+            )
+            if platform == "instagram":
+                creds["dm_oauth_scopes_enabled"] = bool(data.get("inbox_scopes_enabled"))
+            PlatformCredential.objects.update_or_create(
+                organization=organization, platform=platform, defaults={"credentials": creds}
+            )
+            saved.append(platform)
+    if data.get("instagram_app_id") and data.get("instagram_app_secret"):
+        existing = PlatformCredential.objects.filter(organization=organization, platform="instagram_login").first()
+        creds = dict(existing.credentials) if existing else {}
+        creds.update(client_id=data["instagram_app_id"], client_secret=data["instagram_app_secret"])
+        PlatformCredential.objects.update_or_create(
+            organization=organization, platform="instagram_login", defaults={"credentials": creds}
+        )
+        saved.append("instagram_login")
+    return saved
 
 
 class GitHubForm(forms.Form):
@@ -160,12 +240,16 @@ def journey(request, workspace_id):
         not can_configure or (setup_provider in {"google_login", "google_calendar"} and not request.user.is_superuser)
     ):
         raise PermissionDenied
+    if setup_provider in META_PLATFORMS:
+        setup_provider = "meta"
     step = request.GET.get("step", "brand")
     if step not in {"brand", "connections", "ready"}:
         step = "brand"
     form = BrandForm(initial={"name": workspace.name, "timezone": workspace.timezone or "UTC"})
     credential_form = CredentialForm()
     github_form = GitHubForm()
+    meta_form = MetaAppForm()
+    meta_test_result = None
     error = ""
     if request.method == "POST":
         action = request.POST.get("action")
@@ -177,6 +261,54 @@ def journey(request, workspace_id):
                 workspace.save(update_fields=["name", "timezone"])
                 WelcomeProgress.objects.get_or_create(workspace=workspace)
                 return redirect(reverse("welcome:journey", args=[workspace.id]) + "?step=connections")
+        elif action in {"meta", "meta_test"}:
+            if not local_or_secure(request):
+                return HttpResponse("Usa HTTPS o localhost para guardar credenciales.", status=400)
+            if not can_configure:
+                raise PermissionDenied
+            step, setup_provider = "connections", "meta"
+            if action == "meta_test":
+                from apps.social_accounts.meta_connect import validate_meta_app
+
+                stored = PlatformCredential.objects.filter(
+                    organization=workspace.organization, platform="facebook"
+                ).first()
+                creds = stored.credentials if stored else {}
+                if creds.get("client_id") and creds.get("client_secret"):
+                    meta_test_result = validate_meta_app(str(creds["client_id"]), str(creds["client_secret"]))
+                else:
+                    meta_test_result = (False, "Primero guarda el Meta App ID y su secreto.")
+            else:
+                stored = {
+                    key: (c.credentials.get("client_id", ""), c.credentials.get("client_secret", ""))
+                    for key, c in (
+                        (
+                            "meta",
+                            PlatformCredential.objects.filter(
+                                organization=workspace.organization, platform="facebook"
+                            ).first(),
+                        ),
+                        (
+                            "ig",
+                            PlatformCredential.objects.filter(
+                                organization=workspace.organization, platform="instagram_login"
+                            ).first(),
+                        ),
+                    )
+                    if c
+                }
+                meta_form = MetaAppForm(request.POST, stored=stored)
+                if meta_form.is_valid():
+                    saved = save_meta_credentials(workspace.organization, meta_form.cleaned_data)
+                    messages.success(
+                        request,
+                        "Meta configurado ("
+                        + ", ".join(saved)
+                        + "). Pulsa «Probar credenciales» y luego Conectar en cada canal.",
+                    )
+                    return redirect(
+                        reverse("welcome:journey", args=[workspace.id]) + "?step=connections&configure=meta"
+                    )
         elif action in {"credentials", "github"}:
             if not local_or_secure(request):
                 return HttpResponse("Usa HTTPS o localhost para guardar credenciales.", status=400)
@@ -198,10 +330,6 @@ def journey(request, workspace_id):
                     "reddit",
                     "youtube",
                     "tiktok",
-                    "instagram_unified",
-                    "instagram_login",
-                    "instagram",
-                    "facebook",
                     "google_login",
                     "google_calendar",
                 }:
@@ -209,19 +337,6 @@ def journey(request, workspace_id):
                 if platform in {"google_login", "google_calendar"} and not request.user.is_superuser:
                     raise PermissionDenied
                 credential_form = CredentialForm(request.POST)
-                if platform in {"instagram_login", "instagram", "facebook", "instagram_unified"}:
-                    credential_form.is_valid()
-                    flow = request.POST.get("meta_flow", "")
-                    expected = "instagram_legacy" if platform == "instagram_login" else "facebook_user"
-                    if platform == "instagram_unified":
-                        expected = "unified_suat"
-                        if not credential_form.cleaned_data.get("config_id"):
-                            credential_form.add_error("config_id", "Configuration ID es obligatorio.")
-                    if flow != expected:
-                        credential_form.add_error(
-                            "meta_flow",
-                            "Este formulario corresponde a otro flujo. Para SUAT usa Instagram Unified Login. No reemplazamos tus credenciales. Selecciona el flujo compatible solo si coincide con la configuración real de Meta.",
-                        )
                 if platform == "reddit":
                     credential_form.is_valid()
                     for field in ("subreddit", "reddit_username"):
@@ -233,10 +348,8 @@ def journey(request, workspace_id):
                     reddit_username = values.pop("reddit_username", "")
                     if platform == "reddit":
                         values.update(subreddit=subreddit, user_agent=f"web:avia-social:0.1 (by /u/{reddit_username})")
-                    config_id = values.pop("config_id", "")
+                    values.pop("config_id", None)
                     values.pop("meta_flow", None)
-                    if platform in {"facebook", "instagram", "instagram_unified"} and config_id:
-                        values["config_id"] = config_id
                     if platform in {"google_login", "google_calendar"}:
                         state, _ = InstallationSetup.objects.get_or_create(pk=1)
                         field = "calendar_credentials" if platform == "google_calendar" else "google_credentials"
@@ -301,12 +414,6 @@ def journey(request, workspace_id):
     cards = []
     for platform, title, description, guide in [
         (
-            "instagram_unified",
-            "Instagram · inicio de sesión unificado",
-            "Para apps nuevas de Meta. Autoriza un portfolio y selecciona una o varias cuentas profesionales, sin página de Facebook.",
-            "https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-unified-login/get-started",
-        ),
-        (
             "linkedin_personal",
             "LinkedIn Personal",
             "Publica en tu perfil profesional.",
@@ -339,7 +446,7 @@ def journey(request, workspace_id):
         (
             "instagram",
             "Instagram vía Facebook",
-            "Selecciona varias cuentas profesionales vinculadas a páginas que administras. Flujo anterior de Meta.",
+            "Publica, responde comentarios y lee métricas de cuentas profesionales vinculadas a tus páginas.",
             "https://developers.facebook.com/docs/instagram-platform/instagram-api-with-facebook-login/",
         ),
         (
@@ -366,25 +473,17 @@ def journey(request, workspace_id):
                 "account_name", "account_handle", "account_platform_id", "connection_status"
             )
         )
-        stored_credential = PlatformCredential.objects.filter(
-            organization=workspace.organization, platform=platform
-        ).first()
         cards.append(
             {
                 "platform": platform,
-                "config_id": (
-                    stored_credential.credentials.get("config_id", "")
-                    if stored_credential and platform in {"facebook", "instagram", "instagram_unified"}
-                    else ""
-                ),
                 "title": title,
                 "description": description,
                 "guide": guide,
                 "configured": platform in configured,
                 "accounts": accounts,
                 "needs_attention": any(a["connection_status"] != "connected" for a in accounts),
-                "callback": request.build_absolute_uri(
-                    reverse("social_accounts:oauth_callback", kwargs={"platform": to_url_slug(platform)})
+                "callback": public_url(
+                    request, reverse("social_accounts:oauth_callback", kwargs={"platform": to_url_slug(platform)})
                 ),
             }
         )
@@ -408,6 +507,9 @@ def journey(request, workspace_id):
             "form": form,
             "credential_form": credential_form,
             "github_form": github_form,
+            "meta_form": meta_form,
+            "meta_test_result": meta_test_result,
+            "meta": _meta_context(request, workspace),
             "error": error,
             "workspace": workspace,
             "cards": cards,
@@ -417,10 +519,42 @@ def journey(request, workspace_id):
             "calendar_configured": bool(state and state.calendar_credentials),
             "calendar_connection": CalendarConnection.objects.filter(user=request.user, workspace=workspace).first(),
             "calendar_callback": callback_url(request, workspace.id),
-            "public_origin": request.build_absolute_uri("/").rstrip("/"),
+            "public_origin": public_url(request, "/").rstrip("/"),
             "google_connected": SocialAccount.objects.filter(user=request.user, provider="google").exists(),
             "google_callback": request.build_absolute_uri("/accounts/google/login/callback/"),
             "github_source": BrandSource.objects.filter(workspace=workspace).first(),
             "publishing_enabled": getattr(settings, "AVIA_PUBLISH_ENABLED", False),
         },
     )
+
+
+def _meta_context(request, workspace):
+    """Everything the Meta wizard shows: exact callbacks and what is configured."""
+    creds = {
+        c.platform: c.credentials
+        for c in PlatformCredential.objects.filter(
+            organization=workspace.organization, platform__in=["facebook", "instagram", "instagram_login"]
+        )
+    }
+
+    def cb(platform):
+        return public_url(
+            request, reverse("social_accounts:oauth_callback", kwargs={"platform": to_url_slug(platform)})
+        )
+
+    fb = creds.get("facebook", {})
+    return {
+        "callbacks": {
+            "facebook": cb("facebook"),
+            "instagram": cb("instagram"),
+            "instagram_login": cb("instagram_login"),
+        },
+        "origin": public_url(request, "/").rstrip("/"),
+        "https_ok": bool(public_base_url()) or request.is_secure(),
+        "meta_app_id": str(fb.get("client_id", "")),
+        "meta_configured": bool(fb.get("client_id") and fb.get("client_secret")),
+        "instagram_configured": bool(creds.get("instagram_login", {}).get("client_id")),
+        "instagram_app_id": str(creds.get("instagram_login", {}).get("client_id", "")),
+        "inbox_enabled": bool(fb.get("inbox_scopes_enabled")),
+        "has_legacy_config_id": any(c.get("config_id") for c in creds.values()),
+    }

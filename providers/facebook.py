@@ -38,8 +38,7 @@ from .types import (
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://graph.facebook.com/v25.0"
-# Facebook Login for Business documents the unversioned dialog endpoint.
-OAUTH_URL = "https://www.facebook.com/dialog/oauth"
+OAUTH_URL = "https://www.facebook.com/v25.0/dialog/oauth"
 TOKEN_URL = f"{BASE_URL}/oauth/access_token"
 # Webhook fields we subscribe a connected Page to. ``feed`` carries comments on
 # the Page's posts, ``mention`` carries mentions of the Page, ``messages``
@@ -176,13 +175,32 @@ class FacebookProvider(SocialProvider):
     # OAuth
     # ------------------------------------------------------------------
 
+    @property
+    def inbox_scopes_enabled(self) -> bool:
+        """Messenger inbox + Page webhooks. Off by default: these permissions
+        live in Meta's Messenger / Page-management use cases, and requesting a
+        permission the app has not added makes Meta reject the whole dialog
+        ("Invalid Scopes"). Turn on once the use case is added."""
+        from .meta_messaging import enabled
+
+        return enabled(self.credentials.get("inbox_scopes_enabled", False))
+
+    @property
+    def oauth_scopes(self) -> list[str]:
+        scopes = list(self.required_scopes)
+        if self.inbox_scopes_enabled:
+            scopes += [s for s in ("pages_manage_metadata", "pages_messaging") if s not in scopes]
+        return scopes
+
     def get_auth_url(self, redirect_uri: str, state: str, code_verifier: str | None = None) -> str:
+        # AVIA 0.3: classic Facebook Login only (Postiz parity). Login for
+        # Business ``config_id`` configurations produced "Sorry, something went
+        # wrong" for own-business installs, so a stored config_id is ignored.
         params = facebook_login_params(
             client_id=self.credentials["client_id"],
             redirect_uri=redirect_uri,
             state=state,
-            scopes=self.required_scopes,
-            config_id=str(self.credentials.get("config_id") or "").strip(),
+            scopes=self.oauth_scopes,
         )
         return f"{OAUTH_URL}?{urlencode(params)}"
 

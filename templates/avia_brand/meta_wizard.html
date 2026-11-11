@@ -1,0 +1,64 @@
+<article class="journey-card meta-wizard">
+<div class="journey-card-top"><span class="journey-provider">META</span><span class="journey-status">{% if meta.meta_configured %}App de Meta guardada{% else %}Sin configurar{% endif %}{% if meta.instagram_configured %} · Instagram directo listo{% endif %}</span></div>
+<h2>Meta · Facebook e Instagram</h2>
+<p>Una sola app de Meta sirve para Facebook Pages e Instagram vía Facebook. Instagram directo usa el ID de Instagram de esa misma app. AVIA usa el inicio de sesión clásico de Facebook (igual que Postiz): sin Configuration ID ni Unified Login.</p>
+
+{% if not meta.https_ok %}<div role="alert" class="journey-callout"><strong>⚠ Falta HTTPS</strong><p>Meta solo acepta callbacks https. Define <code>APP_URL=https://tu-dominio</code> y <code>AVIA_HTTPS=true</code> en <code>.env</code> (ver Cloudflare abajo) y recrea app y worker. Callbacks actuales: <code>{{ meta.origin }}</code>.</p></div>{% endif %}
+{% if meta.has_legacy_config_id %}<div role="status" class="journey-callout"><strong>Configuración anterior detectada</strong><p>Había un Configuration ID guardado. Esta versión lo ignora; al guardar de nuevo se elimina.</p></div>{% endif %}
+
+<details {% if not meta.meta_configured %}open{% endif %}><summary>1 · Crear o revisar la app en Meta (una vez)</summary>
+<ol>
+<li>Entra a <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">developers.facebook.com/apps ↗</a> → <strong>Crear app</strong> → «Otro» → tipo <strong>Empresa</strong> (o abre la tuya).</li>
+<li><strong>Casos de uso → Agregar</strong>:
+<ul>
+<li>«Administrar todo en tu página» → Personalizar → pulsa <em>Agregar</em> en <code>pages_show_list</code>, <code>pages_manage_posts</code>, <code>pages_manage_engagement</code>, <code>pages_read_engagement</code>, <code>pages_read_user_content</code>, <code>read_insights</code>, <code>business_management</code>{% if meta.inbox_enabled %}, <code>pages_manage_metadata</code>{% endif %}.</li>
+<li>«Administrar mensajes y contenido en Instagram» → <strong>Configuración de la API con inicio de sesión de Facebook</strong> → agrega <code>instagram_basic</code>, <code>instagram_content_publish</code>, <code>instagram_manage_comments</code>, <code>instagram_manage_insights</code>{% if meta.inbox_enabled %}, <code>instagram_manage_messages</code>{% endif %}.</li>
+<li>Opcional, Instagram directo: en el mismo caso de uso → <strong>Configuración de la API con inicio de sesión de Instagram</strong> → copia el <em>ID de la app de Instagram</em> y su secreto.</li>
+{% if meta.inbox_enabled %}<li>Bandeja de Messenger: agrega «Interactuar con clientes en Messenger» y <code>pages_messaging</code>.</li>{% endif %}
+</ul></li>
+<li><strong>Configuración de la app → Básica</strong>: completa <em>Dominios de la app</em> con <code>{{ meta.origin }}</code>, Política de privacidad <code>{{ meta.origin }}/privacy/</code>, Términos <code>{{ meta.origin }}/terms/</code>. Copia <strong>App ID</strong> y <strong>App Secret</strong>.</li>
+<li><strong>Inicio de sesión con Facebook → Configuración</strong>: activa «Inicio de sesión con OAuth web» y «Forzar HTTPS», y pega en <em>URI de redireccionamiento de OAuth válidos</em> estas dos líneas exactas:
+<code class="journey-callback">{{ meta.callbacks.facebook }}</code>
+<code class="journey-callback">{{ meta.callbacks.instagram }}</code></li>
+<li>Instagram directo → <em>Configuración de inicio de sesión para empresas</em> → URI de redireccionamiento:
+<code class="journey-callback">{{ meta.callbacks.instagram_login }}</code></li>
+<li><strong>Roles de la app</strong>: mientras la app esté en modo desarrollo, solo pueden conectar personas con rol. Agrega tu Facebook como Administrador/Tester y, para Instagram directo, tu cuenta como <em>Instagram Tester</em> (acepta en Instagram → Configuración → Apps y sitios web → Invitaciones de evaluador).</li>
+<li>Tu Instagram debe ser <strong>profesional</strong> (Empresa o Creador). Para «Instagram vía Facebook», además vinculado a una página que administras.</li>
+</ol>
+</details>
+
+<details open><summary>2 · Pegar las credenciales en AVIA</summary>
+<form method="post" action="{% url 'welcome:journey' workspace.id %}?step=connections&amp;configure=meta">
+{% csrf_token %}<input type="hidden" name="action" value="meta">
+{% if meta_form.non_field_errors %}<p class="journey-error">{{ meta_form.non_field_errors|join:" " }}</p>{% endif %}
+<fieldset><legend>App de Meta · Facebook Pages + Instagram vía Facebook</legend>
+<label for="meta-app-id">Meta App ID</label><input id="meta-app-id" name="meta_app_id" inputmode="numeric" pattern="[0-9]+" maxlength="30" autocomplete="off" value="{{ meta_form.meta_app_id.value|default:meta.meta_app_id }}">
+{% for e in meta_form.meta_app_id.errors %}<p class="journey-error">{{ e }}</p>{% endfor %}
+<label for="meta-app-secret">Meta App Secret{% if meta.meta_configured %} · deja vacío para conservarlo{% endif %}</label><input id="meta-app-secret" name="meta_app_secret" type="password" maxlength="200" autocomplete="new-password">
+{% for e in meta_form.meta_app_secret.errors %}<p class="journey-error">{{ e }}</p>{% endfor %}
+<label><input type="checkbox" name="inbox_scopes_enabled" {% if meta.inbox_enabled %}checked{% endif %}> Pedir permisos de bandeja (DMs y webhooks). Actívalo solo después de agregar los casos de uso de mensajes; si no, Meta muestra «Invalid Scopes».</label>
+</fieldset>
+<fieldset><legend>Instagram directo · opcional, sin página de Facebook</legend>
+<label for="ig-app-id">Instagram App ID (no es el Meta App ID)</label><input id="ig-app-id" name="instagram_app_id" inputmode="numeric" pattern="[0-9]+" maxlength="30" autocomplete="off" value="{{ meta_form.instagram_app_id.value|default:meta.instagram_app_id }}">
+{% for e in meta_form.instagram_app_id.errors %}<p class="journey-error">{{ e }}</p>{% endfor %}
+<label for="ig-app-secret">Instagram App Secret</label><input id="ig-app-secret" name="instagram_app_secret" type="password" maxlength="200" autocomplete="new-password">
+{% for e in meta_form.instagram_app_secret.errors %}<p class="journey-error">{{ e }}</p>{% endfor %}
+</fieldset>
+<button class="btn-brand" type="submit">Guardar configuración de Meta</button>
+<p class="journey-note">Los secretos se guardan cifrados y nunca se vuelven a mostrar.</p>
+</form>
+</details>
+
+<details open><summary>3 · Probar y conectar</summary>
+{% if meta_test_result %}<div role="status" class="journey-callout"><strong>{% if meta_test_result.0 %}✓ Credenciales válidas{% else %}✗ Revisar credenciales{% endif %}</strong><p>{{ meta_test_result.1 }}</p></div>{% endif %}
+<form method="post" action="{% url 'welcome:journey' workspace.id %}?step=connections&amp;configure=meta">{% csrf_token %}<input type="hidden" name="action" value="meta_test"><button class="btn-secondary" type="submit" {% if not meta.meta_configured %}disabled{% endif %}>Probar credenciales con Meta</button></form>
+<div class="journey-actions">
+{% if meta.meta_configured %}
+<form method="post" action="{% url 'social_accounts:connect' workspace.id %}">{% csrf_token %}<input type="hidden" name="platform" value="facebook"><button class="btn-brand" type="submit">Conectar Facebook Pages</button></form>
+<form method="post" action="{% url 'social_accounts:connect' workspace.id %}">{% csrf_token %}<input type="hidden" name="platform" value="instagram"><button class="btn-brand" type="submit">Conectar Instagram vía Facebook</button></form>
+{% endif %}
+{% if meta.instagram_configured %}<form method="post" action="{% url 'social_accounts:connect' workspace.id %}">{% csrf_token %}<input type="hidden" name="platform" value="instagram_login"><button class="btn-brand" type="submit">Conectar Instagram directo</button></form>{% endif %}
+</div>
+<p class="journey-note">En el diálogo de Meta pulsa «Editar acceso» y marca la página y la cuenta de Instagram. Si algo falla, AVIA te mostrará el permiso o el paso exacto que falta.</p>
+</details>
+</article>

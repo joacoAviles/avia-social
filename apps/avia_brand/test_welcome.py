@@ -149,7 +149,7 @@ def test_cross_workspace_and_viewer_forbidden(session):
 
 @pytest.mark.parametrize(
     "platform,key",
-    [("youtube", "client_id"), ("tiktok", "client_key"), ("instagram_login", "client_id"), ("facebook", "client_id")],
+    [("youtube", "client_id"), ("tiktok", "client_key")],
 )
 def test_provider_credentials_encrypted_not_echoed(session, platform, key):
     client, ws, url = session
@@ -158,7 +158,6 @@ def test_provider_credentials_encrypted_not_echoed(session, platform, key):
         {
             "action": "credentials",
             "platform": platform,
-            "meta_flow": {"instagram_login": "instagram_legacy", "facebook": "facebook_user"}.get(platform, ""),
             "client_id": "synthetic-id",
             "client_secret": "synthetic-private-value",
         },
@@ -364,14 +363,8 @@ def test_guides_explain_repository_token_and_tiktok_https(session):
 def test_instagram_direct_can_start_without_facebook(session):
     client, ws, url = session
     client.post(
-        url,
-        {
-            "action": "credentials",
-            "platform": "instagram_login",
-            "meta_flow": "instagram_legacy",
-            "client_id": "synthetic-ig-id",
-            "client_secret": "synthetic-ig-secret",
-        },
+        url + "?step=connections&configure=meta",
+        {"action": "meta", "instagram_app_id": "222222", "instagram_app_secret": "synthetic-ig-secret"},
         HTTP_HOST="localhost",
     )
     assert not PlatformCredential.objects.filter(organization=ws.organization, platform="facebook").exists()
@@ -396,61 +389,22 @@ def test_connections_hide_admin_forms_and_offer_existing_oauth(session):
     assert "Conectar Instagram directo" in html
     assert reverse("social_accounts:connect", args=[ws.id]) in html
     admin = client.get(url + "?step=connections&configure=instagram_login").content.decode()
-    assert 'name="client_secret"' in admin
-    assert "Prepara Instagram directo" in admin
-    assert "Prepara Facebook" not in admin
+    assert 'name="instagram_app_secret"' in admin
+    assert "Meta · Facebook e Instagram" in admin
 
 
-def test_meta_unified_refused_without_overwriting_existing(session):
+def test_unified_card_is_gone(session):
     client, ws, url = session
-    original = PlatformCredential.objects.create(
-        organization=ws.organization,
-        platform="instagram_login",
-        credentials={"client_id": "old", "client_secret": "old-secret"},
-    )
-    response = client.post(
-        url + "?step=connections&configure=instagram_login",
-        {
-            "action": "credentials",
-            "platform": "instagram_login",
-            "meta_flow": "unified_suat",
-            "client_id": "new",
-            "client_secret": "new-secret",
-        },
-        secure=True,
-    )
-    assert response.status_code == 200
-    assert "Para SUAT usa Instagram Unified Login" in response.content.decode()
-    original.refresh_from_db()
-    assert original.credentials["client_id"] == "old"
+    html = client.get(url + "?step=connections").content.decode()
+    assert "inicio de sesión unificado" not in html
 
 
-def test_facebook_business_config_id_drives_login(session):
-    from urllib.parse import parse_qs, urlparse
-
-    from providers.facebook import FacebookProvider
-
+def test_callbacks_use_https_app_url_behind_proxy(session, settings):
     client, ws, url = session
-    response = client.post(
-        url,
-        {
-            "action": "credentials",
-            "platform": "facebook",
-            "meta_flow": "facebook_user",
-            "config_id": "12345678",
-            "client_id": "app",
-            "client_secret": "secret",
-        },
-        secure=True,
-    )
-    assert response.status_code == 302
-    credential = PlatformCredential.objects.get(organization=ws.organization, platform="facebook")
-    query = parse_qs(
-        urlparse(FacebookProvider(credential.credentials).get_auth_url("https://example.test/callback/", "state")).query
-    )
-    assert query["config_id"] == ["12345678"]
-    assert "scope" not in query
-    assert query["response_type"] == ["code"]
+    settings.OAUTH_PUBLIC_BASE_URL = "https://social.example.cl"
+    html = client.get(url + "?step=connections&configure=meta", HTTP_HOST="localhost").content.decode()
+    assert "https://social.example.cl/social-accounts/callback/facebook/" in html
+    assert "Falta HTTPS" not in html
 
 
 def test_connected_channels_are_compact_and_identified(session):
