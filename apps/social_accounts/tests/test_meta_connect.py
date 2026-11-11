@@ -136,3 +136,9 @@ def test_public_url_prefers_https_app_url(settings, rf):
     assert public_url(request, "/cb/") == "https://social.example.cl/cb/"
     settings.OAUTH_PUBLIC_BASE_URL = "http://not-trusted"
     assert public_url(request, "/cb/") == "http://internal:8000/cb/"
+
+
+def test_csp_allows_regional_facebook_hosts(settings):
+    # Chile is redirected to web.facebook.com; form-action covers redirects.
+    assert "https://*.facebook.com" in settings.CSP_FORM_ACTION
+    assert "https://*.instagram.com" in settings.CSP_FORM_ACTION

@@ -13,6 +13,10 @@ Objetivo: que la primera cuenta de Facebook/Instagram se conecte. Se reemplazó 
 - **Callbacks a prueba de proxy**: con `AVIA_HTTPS=true` se construyen desde `APP_URL` (`OAUTH_PUBLIC_BASE_URL`).
 - `python manage.py avia_meta_check`: diagnóstico por consola sin secretos.
 
+## 0.3.1
+
+- CSP `form-action` permite `*.facebook.com` e `*.instagram.com`. En Chile Meta redirige el diálogo a `web.facebook.com` y Chromium bloqueaba el formulario «Conectar» sin mostrar error.
+
 ## Actualizar desde 0.2
 
 ```sh

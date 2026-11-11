@@ -421,9 +421,15 @@ CSP_FORM_ACTION = (
     "https://accounts.google.com",
     "https://checkout.stripe.com",
     "https://billing.stripe.com",
+    # Chromium enforces form-action across the whole redirect chain, and Meta
+    # moves the Login dialog between regional hosts (web.facebook.com in Chile,
+    # m.facebook.com, business.facebook.com for Login for Business).
     "https://www.facebook.com",
+    "https://*.facebook.com",
+    "https://facebook.com",
     "https://api.instagram.com",
     "https://www.instagram.com",
+    "https://*.instagram.com",
     "https://www.threads.com",
     "https://threads.net",
     "https://www.linkedin.com",
