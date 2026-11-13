@@ -23,7 +23,7 @@ Objetivo: que la primera cuenta de Facebook/Instagram se conecte. Se reemplazó 
 - Aviso visible en todas las pantallas cuando la publicación está desactivada (antes las publicaciones quedaban en «Scheduled» sin explicación).
 - Permiso de Messenger (`pages_messaging`) separado de la bandeja de Instagram.
 
-## 0.3.3
+## 0.3.4 (incluye 0.3.3)
 
 - El aviso de envío en pausa solo lo ven administradores y ya no muestra detalles de configuración del servidor.
 
