@@ -8,7 +8,8 @@ from pathlib import Path
 import yaml
 from django.conf import settings
 
-REPOSITORY = "joacoAviles/avia-rockets-brand"
+REPOSITORY = "joacoAviles/avia-rockets-brand"  # legacy snapshot source
+UI_SNAPSHOT_SOURCES = {(REPOSITORY, ""), ("joacoAviles/Avia-Brands", "brands/avia-rockets")}
 HEX = re.compile(r"#[0-9a-fA-F]{6}\Z")
 
 
@@ -18,7 +19,9 @@ def private_identity():
         if path.stat().st_size > 131072:
             return None
         data = json.loads(path.read_text())
-        if data.get("repository") != REPOSITORY or not re.fullmatch(r"[0-9a-f]{40}", data.get("commit", "")):
+        if (data.get("repository"), data.get("path", "")) not in UI_SNAPSHOT_SOURCES or not re.fullmatch(
+            r"[0-9a-f]{40}", data.get("commit", "")
+        ):
             return None
         raw = data["manifest"].encode()
         if (
@@ -68,6 +71,8 @@ def tokens(identity):
         font = identity["visual"].get("typography", {}).get("display", "")
         if font in {"Orbitron", "Orbitron Bold"}:
             values["--brand-font-display"] = "'Orbitron', 'Inter', sans-serif"
+        elif font in {"Space Grotesk"}:
+            values["--brand-font-display"] = "'Space Grotesk', 'Inter', sans-serif"
         return list(values.items())
     except (KeyError, TypeError, AttributeError):
         return []
@@ -77,11 +82,21 @@ def ui_brand(request):
     identity = None
     # Reviewed database revisions take precedence. No workspace identity is mutated.
     from django.db import OperationalError, ProgrammingError
+    from django.db.models import Q
 
     from .models import BrandSource
+    from .services import UI_SOURCES
 
+    match = Q()
+    for repository, path in UI_SOURCES:
+        match |= Q(repository__iexact=repository, path=path)
     try:
-        source = BrandSource.objects.filter(repository=REPOSITORY).select_related("active_revision").first()
+        # First configured source in UI_SOURCES order (Avia-Brands folder before the legacy repo).
+        candidates = {
+            (s.repository.lower(), s.path): s
+            for s in BrandSource.objects.filter(match).select_related("active_revision")
+        }
+        source = next((candidates[(r.lower(), p)] for r, p in UI_SOURCES if (r.lower(), p) in candidates), None)
         if source and source.active_revision_id and source.active_revision.state == "approved":
             identity = source.active_revision.identity
     except (OperationalError, ProgrammingError):

@@ -234,10 +234,16 @@ def test_brand_api_requires_permission_and_only_active_revision(data):
 def test_bootstrap_is_idempotent(data):
     from django.core.management import call_command
 
-    # Existing source is retained, other two created without downloading anything.
+    # Existing legacy source is retained; the three Avia-Brands folders are created once,
+    # without downloading anything.
     call_command("avia_bootstrap", email=data[0].email)
     call_command("avia_bootstrap", email=data[0].email)
-    assert BrandSource.objects.count() == 3
+    assert BrandSource.objects.count() == 4
+    assert set(BrandSource.objects.exclude(path="").values_list("path", flat=True)) == {
+        "brands/avia-rockets",
+        "brands/joaco-avia",
+        "brands/acelerados",
+    }
     assert BrandRevision.objects.count() == 1
 
 

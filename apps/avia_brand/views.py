@@ -109,11 +109,16 @@ def webhook(request):
         repo = payload["repository"]["full_name"]
     except (ValueError, KeyError, TypeError):
         return HttpResponseBadRequest("Invalid event")
-    source = get_object_or_404(BrandSource, repository=repo)
-    if payload.get("ref") != "refs/heads/" + source.branch:
+    sources = list(BrandSource.objects.filter(repository__iexact=repo).order_by("path"))
+    if not sources:
+        return HttpResponse(status=404)
+    # One repository may hold several brands; a push requests a sync for each brand on that branch.
+    sources = [s for s in sources if payload.get("ref") == "refs/heads/" + s.branch]
+    if not sources:
         return HttpResponse(status=204)
     with transaction.atomic():
-        receipt, created = HookReceipt.objects.get_or_create(delivery=delivery, defaults={"source": source})
+        receipt, created = HookReceipt.objects.get_or_create(delivery=delivery, defaults={"source": sources[0]})
         if created:
-            BrandAudit.objects.create(source=source, action="sync_requested")
+            for source in sources:
+                BrandAudit.objects.create(source=source, action="sync_requested")
     return JsonResponse({"accepted": True, "duplicate": not created, "action": "sync_requested"}, status=202)

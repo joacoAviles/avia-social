@@ -1,0 +1,4 @@
+schema_version: 1
+brands:
+  - path: brands/mi-marca
+    name: Mi marca
