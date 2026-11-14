@@ -58,7 +58,7 @@ Avia-Brands/
   brands/acelerados/brand/brand.yaml
 ```
 
-Al vincular un repositorio con `brands.yaml`, el formulario pide la carpeta de la marca (por ejemplo `brands/avia-rockets`). Una marca solo cataloga `<carpeta>/brand/` y `<carpeta>/assets/`: nunca ve archivos de otra marca, y la misma carpeta no puede asignarse a dos workspaces. Los repositorios de una sola marca (con `brand/brand.yaml` en la raíz) siguen funcionando, incluidos los antiguos `joaco-avia-brand`, `avia-rockets-brand` y `acelerados-brand`.
+Al vincular un repositorio con `brands.yaml`, el formulario pide la carpeta de la marca (por ejemplo `brands/avia-rockets`). Una marca solo cataloga `<carpeta>/brand/` y `<carpeta>/assets/`: nunca ve archivos de otra marca, y la misma carpeta no puede asignarse a dos workspaces. Los repositorios de una sola marca (con `brand/brand.yaml` en la raíz) también funcionan.
 
 `avia_bootstrap` crea los tres workspaces AVIA apuntando a las carpetas de Avia-Brands. Cree en GitHub un token fine-grained con **Contents: Read-only**, acceso exclusivo a ese repositorio y vencimiento. No use el token general de su cuenta. Guárdelo localmente en:
 

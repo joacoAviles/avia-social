@@ -4,7 +4,7 @@ La interfaz de producto tiene un sistema compartido para acceso, navegación, ed
 
 ## Fuente privada y separación de marcas
 
-La identidad corporativa se obtiene exclusivamente de la carpeta `brands/avia-rockets` del repositorio privado `joacoAviles/Avia-Brands` (o, en instalaciones antiguas, de `joacoAviles/avia-rockets-brand`), fijando el commit y verificando el hash del manifiesto. No se incorpora el manifiesto privado, su paleta concreta ni recursos privados al repositorio público o a la imagen Docker. El código público incluye una apariencia neutra de respaldo y componentes que reciben colores en ejecución.
+La identidad corporativa se obtiene exclusivamente de la carpeta `brands/avia-rockets` del repositorio privado `joacoAviles/Avia-Brands`, fijando el commit y verificando el hash del manifiesto. No se incorpora el manifiesto privado, su paleta concreta ni recursos privados al repositorio público o a la imagen Docker. El código público incluye una apariencia neutra de respaldo y componentes que reciben colores en ejecución.
 
 1. Si existe una revisión aprobada del origen Avia Rockets en Brand System, el shell usa esa revisión.
 2. Para configurar la apariencia antes de conectar las marcas, el operador puede importar una instantánea local mediante la CLI GitHub autenticada:

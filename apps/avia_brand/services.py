@@ -22,15 +22,9 @@ SOURCES = {
     (BRANDS_REPOSITORY, "brands/joaco-avia"): "Joaco Avia",
     (BRANDS_REPOSITORY, "brands/acelerados"): "Acelerados",
 }
-# Legacy single-brand repositories (one brand at the repository root). Still readable.
-LEGACY_REPOSITORIES = {
-    "joacoAviles/joaco-avia-brand": "Joaco Avia",
-    "joacoAviles/avia-rockets-brand": "Avia Rockets",
-    "joacoAviles/acelerados-brand": "Acelerados",
-}
 # Repositories whose read-only token may come from the mounted secrets directory.
-REPOSITORIES = {BRANDS_REPOSITORY: "Avia Brands", **LEGACY_REPOSITORIES}
-UI_SOURCES = ((BRANDS_REPOSITORY, "brands/avia-rockets"), ("joacoAviles/avia-rockets-brand", ""))
+REPOSITORIES = {BRANDS_REPOSITORY: "Avia Brands"}
+UI_SOURCES = ((BRANDS_REPOSITORY, "brands/avia-rockets"),)
 INDEX_PATH = "brands.yaml"
 BRAND_PATH = re.compile(r"(?:[a-z0-9][a-z0-9_-]{0,62}/){0,3}[a-z0-9][a-z0-9_-]{0,62}")
 MAX_BYTES = 5 * 1024 * 1024
@@ -77,7 +71,7 @@ def source_name(repository, path):
     for (repo, folder), name in SOURCES.items():
         if repo.lower() == repository.lower() and folder == path:
             return name
-    return LEGACY_REPOSITORIES.get(repository) if not path else None
+    return None
 
 
 class SyncError(Exception):

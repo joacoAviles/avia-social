@@ -338,7 +338,7 @@ def test_upgrade_preserves_existing_brand_and_closes_bootstrap():
         org = old.get_model("organizations", "Organization").objects.create(name="Existing org")
         ws = old.get_model("workspaces", "Workspace").objects.create(organization=org, name="Existing brand")
         source = old.get_model("avia_brand", "BrandSource").objects.create(
-            workspace=ws, repository="joacoAviles/avia-rockets-brand"
+            workspace=ws, repository="joacoAviles/Avia-Brands"
         )
         MigrationExecutor(connection).migrate(new_target)
         assert User.objects.get(pk=user.pk).password == "unchanged-hash"

@@ -23,7 +23,7 @@ def data():
     owner = User.objects.create_user(email="owner@example.test", password="pass")
     other = User.objects.create_user(email="other@example.test", password="pass")
     ws = owner.workspace_memberships.first().workspace
-    src = BrandSource.objects.create(workspace=ws, repository="joacoAviles/joaco-avia-brand")
+    src = BrandSource.objects.create(workspace=ws, repository="joacoAviles/Avia-Brands", path="brands/joaco-avia")
     rev = BrandRevision.objects.create(
         source=src,
         commit="a" * 40,
@@ -78,7 +78,7 @@ def test_approval_is_immutable_and_applies_identity(data):
 def test_cross_source_revision_rejected(data):
     owner, other, ws, src, rev = data
     other_ws = other.workspace_memberships.first().workspace
-    BrandSource.objects.create(workspace=other_ws, repository="joacoAviles/acelerados-brand")
+    BrandSource.objects.create(workspace=other_ws, repository="joacoAviles/Avia-Brands", path="brands/acelerados")
     c = login(other)
     assert c.post(reverse("avia_brand:review", args=[other_ws.id, rev.id]), {"decision": "approve"}).status_code == 404
 
@@ -94,7 +94,13 @@ def test_sync_idempotent_and_no_autoapproval(data):
     sha = hashlib.sha1(b"blob " + str(len(manifest)).encode() + b"\0" + manifest).hexdigest()
     tree = {
         "tree": [
-            {"type": "blob", "mode": "100644", "path": "brand/brand.yaml", "sha": sha, "size": len(manifest)},
+            {
+                "type": "blob",
+                "mode": "100644",
+                "path": "brands/joaco-avia/brand/brand.yaml",
+                "sha": sha,
+                "size": len(manifest),
+            },
             {"type": "blob", "mode": "100644", "path": ".env", "sha": "f" * 40, "size": 10},
         ]
     }
@@ -234,12 +240,12 @@ def test_brand_api_requires_permission_and_only_active_revision(data):
 def test_bootstrap_is_idempotent(data):
     from django.core.management import call_command
 
-    # Existing legacy source is retained; the three Avia-Brands folders are created once,
+    # The existing Joaco source is kept; the other Avia-Brands folders are created once,
     # without downloading anything.
     call_command("avia_bootstrap", email=data[0].email)
     call_command("avia_bootstrap", email=data[0].email)
-    assert BrandSource.objects.count() == 4
-    assert set(BrandSource.objects.exclude(path="").values_list("path", flat=True)) == {
+    assert BrandSource.objects.count() == 3
+    assert set(BrandSource.objects.values_list("path", flat=True)) == {
         "brands/avia-rockets",
         "brands/joaco-avia",
         "brands/acelerados",
@@ -250,7 +256,7 @@ def test_bootstrap_is_idempotent(data):
 def test_reader_get_only_no_redirects(tmp_path):
     token_dir = tmp_path / "tokens"
     token_dir.mkdir()
-    (token_dir / "joaco-avia-brand.token").write_text("synthetic-token")
+    (token_dir / "Avia-Brands.token").write_text("synthetic-token")
     with (
         override_settings(AVIA_GITHUB_TOKEN_DIR=str(token_dir)),
         patch("apps.avia_brand.services.httpx.Client") as client,
@@ -258,13 +264,13 @@ def test_reader_get_only_no_redirects(tmp_path):
         response = client.return_value.__enter__.return_value.stream.return_value.__enter__.return_value
         response.status_code = 200
         response.iter_bytes.return_value = [b'{"sha":"fixture"}']
-        reader = GitHubReader("joacoAviles/joaco-avia-brand")
+        reader = GitHubReader("joacoAviles/Avia-Brands")
         assert reader.get("/commits/main") == {"sha": "fixture"}
         assert client.call_args.kwargs["follow_redirects"] is False
         stream = client.return_value.__enter__.return_value.stream
         assert stream.call_args.args == (
             "GET",
-            "https://api.github.com/repos/joacoAviles/joaco-avia-brand/commits/main",
+            "https://api.github.com/repos/joacoAviles/Avia-Brands/commits/main",
         )
 
 

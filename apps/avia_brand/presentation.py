@@ -8,8 +8,8 @@ from pathlib import Path
 import yaml
 from django.conf import settings
 
-REPOSITORY = "joacoAviles/avia-rockets-brand"  # legacy snapshot source
-UI_SNAPSHOT_SOURCES = {(REPOSITORY, ""), ("joacoAviles/Avia-Brands", "brands/avia-rockets")}
+REPOSITORY = "joacoAviles/Avia-Brands"
+UI_PATH = "brands/avia-rockets"
 HEX = re.compile(r"#[0-9a-fA-F]{6}\Z")
 
 
@@ -19,7 +19,7 @@ def private_identity():
         if path.stat().st_size > 131072:
             return None
         data = json.loads(path.read_text())
-        if (data.get("repository"), data.get("path", "")) not in UI_SNAPSHOT_SOURCES or not re.fullmatch(
+        if (data.get("repository"), data.get("path")) != (REPOSITORY, UI_PATH) or not re.fullmatch(
             r"[0-9a-f]{40}", data.get("commit", "")
         ):
             return None
