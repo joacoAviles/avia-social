@@ -47,27 +47,34 @@ Antes de conectar cuentas reales, revise la [auditoría previa a instalación](d
 
 ## Identidad privada
 
-El onboarding admite un repositorio explícito por marca, verificado con credenciales de lectura. Para las marcas AVIA, sus únicas fuentes de identidad siguen siendo:
-
-- `joacoAviles/joaco-avia-brand`
-- `joacoAviles/avia-rockets-brand`
-- `joacoAviles/acelerados-brand`
-
-Cada una corresponde a un workspace distinto. Cree en GitHub un token fine-grained por repositorio, con **Contents: Read-only**, acceso exclusivo a ese repositorio y vencimiento. No use el token general de su cuenta. Guárdelos localmente en:
+Un repositorio puede contener **varias marcas**, una por carpeta. Cada carpeta es una fuente independiente vinculada a su propio workspace, con su catálogo, revisiones y aprobación. Para las marcas AVIA la fuente es el repositorio privado `joacoAviles/Avia-Brands`:
 
 ```text
-secrets/joaco-avia-brand.token
-secrets/avia-rockets-brand.token
-secrets/acelerados-brand.token
+Avia-Brands/
+  brands.yaml                      # índice: schema_version 1 + lista de carpetas
+  brands/avia-rockets/brand/brand.yaml
+  brands/avia-rockets/assets/...
+  brands/joaco-avia/brand/brand.yaml
+  brands/acelerados/brand/brand.yaml
+```
+
+Al vincular un repositorio con `brands.yaml`, el formulario pide la carpeta de la marca (por ejemplo `brands/avia-rockets`). Una marca solo cataloga `<carpeta>/brand/` y `<carpeta>/assets/`: nunca ve archivos de otra marca, y la misma carpeta no puede asignarse a dos workspaces. Los repositorios de una sola marca (con `brand/brand.yaml` en la raíz) siguen funcionando, incluidos los antiguos `joaco-avia-brand`, `avia-rockets-brand` y `acelerados-brand`.
+
+`avia_bootstrap` crea los tres workspaces AVIA apuntando a las carpetas de Avia-Brands. Cree en GitHub un token fine-grained con **Contents: Read-only**, acceso exclusivo a ese repositorio y vencimiento. No use el token general de su cuenta. Guárdelo localmente en:
+
+```text
+secrets/Avia-Brands.token
 ```
 
 El directorio se monta en modo lectura, no se incorpora a Git ni a la imagen Docker. En Linux los archivos deben ser legibles por UID 10001 del contenedor; por ejemplo propietario `10001`, archivo `0400`, directorio `0500`. Mantenga copias y permisos bajo control del administrador. El programa solo realiza GET a `api.github.com`, no ejecuta código del repositorio y no sigue redirecciones. La limitación de privilegios del token debe configurarse en GitHub; el programa no puede reducir los privilegios de un token mal emitido.
 
 ```sh
 docker compose exec app python manage.py avia_sync_brands
+# una sola marca:
+docker compose exec app python manage.py avia_sync_brands --repository joacoAviles/Avia-Brands --path brands/avia-rockets
 ```
 
-Se lee la rama configurada (predeterminada del repositorio al vincularlo; `main` en fuentes AVIA heredadas) una vez y se fija el commit SHA completo. Se cataloga `brand/` y `assets/`, excluyendo archivos ocultos, symlinks, submódulos y archivos mayores de 5 MiB. `brand/brand.yaml` debe usar `schema_version: 1` y contener `brand.name`. Un cambio crea una revisión **pendiente**; el propietario o rol con `manage_workspace_settings` aprueba/rechaza en la interfaz. Los borradores de identidad no reemplazan la versión activa. Revisiones ya decididas no se reescriben. Para volver a una identidad anterior, revierta en GitHub y sincronice el nuevo commit.
+Se lee la rama configurada (predeterminada del repositorio al vincularlo; `main` en fuentes AVIA heredadas) una vez y se fija el commit SHA completo. Se cataloga `brand/` y `assets/` de la carpeta de la marca, excluyendo archivos ocultos, symlinks, submódulos y archivos mayores de 5 MiB. `brand/brand.yaml` debe usar `schema_version: 1` y contener `brand.name`. Los colores del workspace salen de `visual.colors.primary` y `visual.colors.secondary` (hex o nombre de una clave de `visual.colors.values`); sin ellos se usan `values.primary`/`values.secondary`. Un cambio crea una revisión **pendiente**; el propietario o rol con `manage_workspace_settings` aprueba/rechaza en la interfaz. Los borradores de identidad no reemplazan la versión activa. Revisiones ya decididas no se reescriben. Para volver a una identidad anterior, revierta en GitHub y sincronice el nuevo commit.
 
 La identidad aprobada gobierna nombre y colores del workspace; tipografías, estilo y catálogo se consultan en el panel. No se descargan ni sirven fuentes privadas automáticamente. Recursos aprobados se descargan autenticados y por SHA, con `no-store`; **no se copian automáticamente a la biblioteca pública de medios**. No se inventan logos o campos TBD. Los datos sincronizados se guardan únicamente en su PostgreSQL privado.
 

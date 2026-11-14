@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read the fixed private AVIA source via gh; store only in ignored runtime secrets/."""
+"""Read the Avia Rockets folder of the private Avia-Brands repo via gh; store only in ignored runtime secrets/."""
 
 import base64
 import hashlib
@@ -10,7 +10,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-REPOSITORY = "joacoAviles/avia-rockets-brand"
+REPOSITORY = "joacoAviles/Avia-Brands"
+BRAND_PATH = "brands/avia-rockets"
 
 
 def read(path):
@@ -25,11 +26,17 @@ def main():
     commit = read("/commits/main")["sha"]
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise SystemExit("Invalid commit")
-    file = read("/contents/brand/brand.yaml?ref=" + commit)
+    file = read("/contents/" + BRAND_PATH + "/brand/brand.yaml?ref=" + commit)
     raw = base64.b64decode(file["content"])
     if len(raw) > 65536 or hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest() != file["sha"]:
         raise SystemExit("Invalid manifest integrity")
-    envelope = {"repository": REPOSITORY, "commit": commit, "blob_sha": file["sha"], "manifest": raw.decode("utf-8")}
+    envelope = {
+        "repository": REPOSITORY,
+        "path": BRAND_PATH,
+        "commit": commit,
+        "blob_sha": file["sha"],
+        "manifest": raw.decode("utf-8"),
+    }
     directory = Path(__file__).resolve().parents[1] / "secrets"
     directory.mkdir(mode=0o700, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=".ui-brand-", dir=directory)

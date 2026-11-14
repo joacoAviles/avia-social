@@ -213,10 +213,25 @@ def test_org_owner_cannot_change_global_google(session, owner):
     )
 
 
+def single_brand_repo(metadata):
+    """GitHub answers for a repository with one brand at its root (no brands.yaml index)."""
+
+    def get(path):
+        if path == "":
+            return metadata
+        if path.startswith("/commits/"):
+            return {"sha": "c" * 40}
+        return {"tree": [{"type": "blob", "mode": "100644", "path": "brand/brand.yaml", "sha": "d" * 40}]}
+
+    return get
+
+
 def test_github_verified_then_saved_and_not_echoed(session):
     client, ws, url = session
     with patch.object(
-        GitHubReader, "get", return_value={"full_name": "example/identity", "default_branch": "brand/main"}
+        GitHubReader,
+        "get",
+        side_effect=single_brand_repo({"full_name": "example/identity", "default_branch": "brand/main"}),
     ) as get:
         response = client.post(
             url,
@@ -228,7 +243,7 @@ def test_github_verified_then_saved_and_not_echoed(session):
             },
             secure=True,
         )
-    assert response.status_code == 302 and get.call_args.args == ("",)
+    assert response.status_code == 302 and get.call_args_list[0].args == ("",)
     source = BrandSource.objects.get(workspace=ws)
     assert source.github_token == "synthetic-private-token" and source.branch == "brand/main"
     assert b"synthetic-private-token" not in client.get(url + "?step=connections").content
@@ -250,7 +265,9 @@ def test_github_failure_does_not_save(session):
 def test_github_cannot_reassign_history(session):
     client, ws, url = session
     BrandSource.objects.create(workspace=ws, repository="example/first")
-    with patch.object(GitHubReader, "get", return_value={"full_name": "example/second", "default_branch": "main"}):
+    with patch.object(
+        GitHubReader, "get", side_effect=single_brand_repo({"full_name": "example/second", "default_branch": "main"})
+    ):
         client.post(
             url, {"action": "github", "repository": "example/second", "token": "secret", "readonly": "on"}, secure=True
         )
@@ -309,7 +326,7 @@ def test_upgrade_preserves_existing_brand_and_closes_bootstrap():
     from django.db.migrations.executor import MigrationExecutor
 
     old_target = [("avia_brand", "0002_site_identity")]
-    new_target = [("avia_brand", "0005_calendarconnection_creation_started_and_more")]
+    new_target = [("avia_brand", "0006_brandsource_path")]
     executor = MigrationExecutor(connection)
     old_target = [node for node in executor.loader.graph.leaf_nodes() if node[0] != "avia_brand"] + old_target
     executor.migrate(old_target)
