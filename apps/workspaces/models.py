@@ -48,20 +48,12 @@ class Workspace(models.Model):
 
             source = BrandSource.objects.filter(workspace_id=self.pk).select_related("active_revision").first()
             if source:
-                from apps.avia_brand.services import REPOSITORIES
+                from apps.avia_brand.services import source_name, workspace_colors
 
                 identity = source.active_revision.identity if source.active_revision_id else {}
-                self.name = identity.get("brand", {}).get("name", REPOSITORIES.get(source.repository, self.name))
-                colors = identity.get("visual", {}).get("colors", {}).get("values", {})
-                import re
-
-                values = (
-                    [v for v in colors.values() if isinstance(v, str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", v)]
-                    if isinstance(colors, dict)
-                    else []
-                )
-                self.primary_color = values[0] if values else ""
-                self.secondary_color = values[1] if len(values) > 1 else ""
+                fallback = source_name(source.repository, source.path) or self.name
+                self.name = identity.get("brand", {}).get("name", fallback)
+                self.primary_color, self.secondary_color = workspace_colors(identity)
                 self.icon = ""
                 if kwargs.get("update_fields"):
                     kwargs["update_fields"] = set(kwargs["update_fields"]) | {

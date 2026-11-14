@@ -10,12 +10,28 @@ from apps.common.encryption import EncryptedJSONField, EncryptedTextField
 
 class BrandSource(models.Model):
     workspace = models.OneToOneField("workspaces.Workspace", on_delete=models.CASCADE, related_name="brand_source")
-    repository = models.CharField(max_length=100, unique=True)
+    repository = models.CharField(max_length=100)
+    # Brand folder inside the repository ("" = repository root). One repository can hold
+    # several brands (e.g. brands/avia-rockets, brands/joaco-avia); each folder is its own
+    # independent source with its own revisions, catalog and approval history.
+    path = models.CharField(max_length=200, blank=True, default="")
     github_token = EncryptedTextField(blank=True, default="")
     branch = models.CharField(max_length=255, default="main")
     active_revision = models.ForeignKey(
         "BrandRevision", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
     )
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["repository", "path"], name="avia_source_repository_path")]
+
+    @property
+    def root(self):
+        """Prefix of every catalogued file for this brand, with trailing slash or empty."""
+        return self.path.strip("/") + "/" if self.path else ""
+
+    @property
+    def label(self):
+        return self.repository + (" · " + self.path if self.path else "")
 
 
 class BrandRevision(models.Model):

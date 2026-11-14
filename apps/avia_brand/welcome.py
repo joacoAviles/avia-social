@@ -28,7 +28,7 @@ from apps.social_accounts.oauth_aliases import to_url_slug
 from apps.social_accounts.views import _get_configured_platforms
 
 from .models import BrandSource, InstallationSetup, WelcomeProgress
-from .services import GitHubReader, SyncError
+from .services import GitHubReader, SyncError, clean_path, list_brands
 
 
 class SetupForm(forms.Form):
@@ -153,11 +153,25 @@ def save_meta_credentials(organization, data) -> list[str]:
     return saved
 
 
+class BrandChoiceError(Exception):
+    """The repository holds several brands and no valid folder was chosen."""
+
+    def __init__(self, brands):
+        super().__init__("brand folder required")
+        self.brands = brands
+
+
 class GitHubForm(forms.Form):
     repository = forms.RegexField(
         r"\A[A-Za-z0-9][A-Za-z0-9_.-]{0,38}/[A-Za-z0-9][A-Za-z0-9_.-]{0,59}\Z",
         label="Repositorio (propietario/nombre)",
         max_length=100,
+    )
+    path = forms.CharField(
+        label="Carpeta de la marca (si el repositorio tiene varias)",
+        required=False,
+        max_length=200,
+        help_text="Ejemplo: brands/avia-rockets. Déjalo vacío si brand/brand.yaml está en la raíz.",
     )
     token = forms.CharField(label="Token de lectura", widget=forms.PasswordInput, max_length=2000)
     readonly = forms.BooleanField(label="He limitado este token a lectura del repositorio indicado.")
@@ -375,7 +389,9 @@ def journey(request, workspace_id):
                 if github_form.is_valid():
                     data = github_form.cleaned_data
                     try:
-                        metadata = GitHubReader(data["repository"], data["token"]).get("")
+                        path = clean_path(data.get("path"))
+                        reader = GitHubReader(data["repository"], data["token"])
+                        metadata = reader.get("")
                         branch = metadata.get("default_branch")
                         if (
                             not isinstance(branch, str)
@@ -383,10 +399,16 @@ def journey(request, workspace_id):
                             or metadata.get("full_name", "").lower() != data["repository"].lower()
                         ):
                             raise SyncError("Respuesta de repositorio no válida")
+                        brands = list_brands(reader, branch)
+                        if brands and path not in {b["path"] for b in brands}:
+                            raise BrandChoiceError(brands)
                         with transaction.atomic():
                             # Never reassign reviewed history to a different repository.
                             source = BrandSource.objects.select_for_update().filter(workspace=workspace).first()
-                            if source and source.repository.lower() != data["repository"].lower():
+                            if source and (source.repository.lower(), source.path) != (
+                                data["repository"].lower(),
+                                path,
+                            ):
                                 raise SyncError(
                                     "Esta marca ya tiene otra fuente. Conserva su historial; crea otra marca para otra fuente."
                                 )
@@ -394,6 +416,7 @@ def journey(request, workspace_id):
                                 workspace=workspace,
                                 defaults={
                                     "repository": metadata["full_name"],
+                                    "path": path,
                                     "github_token": data["token"],
                                     "branch": branch,
                                 },
@@ -403,8 +426,13 @@ def journey(request, workspace_id):
                             "Acceso a GitHub verificado. Sincroniza el catálogo y aprueba la identidad cuando esté lista.",
                         )
                         return redirect(reverse("welcome:journey", args=[workspace.id]) + "?step=connections")
+                    except BrandChoiceError as choice:
+                        error = (
+                            "Este repositorio contiene varias marcas. Indica la carpeta de esta marca: "
+                            + ", ".join(f"{b['path']} ({b['name']})" for b in choice.brands)
+                        )
                     except (SyncError, IntegrityError):
-                        error = "No se pudo vincular el repositorio. Revisa el nombre, el acceso de lectura y que no esté asignado a otra marca."
+                        error = "No se pudo vincular el repositorio. Revisa el nombre, la carpeta, el acceso de lectura y que esa marca no esté asignada a otro espacio."
             step = "connections"
             setup_provider = request.POST.get("platform", "github")
         elif action == "finish":

@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 from django.test import Client, override_settings
 
-from .presentation import REPOSITORY, private_identity, tokens, ui_brand
+from .presentation import REPOSITORY, UI_PATH, private_identity, tokens, ui_brand
 
 # Synthetic fixture: does not contain the private corporate palette or documents.
 IDENTITY = {
@@ -22,6 +22,7 @@ def envelope(manifest):
     raw = manifest.encode()
     return {
         "repository": REPOSITORY,
+        "path": UI_PATH,
         "commit": "a" * 40,
         "manifest": manifest,
         "blob_sha": hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest(),
