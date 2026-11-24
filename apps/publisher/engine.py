@@ -114,6 +114,12 @@ def _resolve_publish_credentials(account, *, read_only=False):
             credentials["page_id"] = account.webhook_target_id
             credentials["missing_scopes"] = account.missing_scopes
             credentials["messaging_access"] = account.messaging_access
+        elif platform == "instagram_unified":
+            # Unified Login stores the linked Page ID in webhook_target_id when
+            # the account is set up. Without page_id the DM fetch exits early.
+            if account.webhook_target_id:
+                credentials["page_id"] = account.webhook_target_id
+            credentials["messaging_access"] = account.messaging_access
         # The comment poll and the first-comment reconciliation both match our
         # own comments on handle as well as id: Instagram often returns a
         # comment's ``username`` without a ``from`` object, and an unrecognised

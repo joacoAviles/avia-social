@@ -18,7 +18,7 @@ from .types import InboxMessage
 
 logger = logging.getLogger(__name__)
 
-META_DM_PLATFORMS = {"facebook", "instagram", "instagram_login"}
+META_DM_PLATFORMS = {"facebook", "instagram", "instagram_login", "instagram_unified"}
 
 
 def enabled(value) -> bool:

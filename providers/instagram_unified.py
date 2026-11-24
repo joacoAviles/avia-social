@@ -23,18 +23,20 @@ GRAPH = "https://graph.facebook.com/v26.0"
 
 class InstagramUnifiedProvider(InstagramProvider):
     platform_name = "instagram_unified"
-    # Inbox routing and metrics need their own verified integration contract.
-    subscribe_webhooks = SocialProvider.subscribe_webhooks
-    unsubscribe_webhooks = SocialProvider.unsubscribe_webhooks
-    get_messages = SocialProvider.get_messages
-    reply_to_message = SocialProvider.reply_to_message
-    reply_to_comment = SocialProvider.reply_to_comment
+    # Metrics disabled until a verified Unified Login insights contract exists.
     get_account_metrics = SocialProvider.get_account_metrics
     get_post_metrics = SocialProvider.get_post_metrics
 
     @property
     def required_scopes(self):
-        return ["instagram_basic", "instagram_content_publish"]
+        return [
+            "instagram_basic",
+            "instagram_content_publish",
+            "instagram_manage_comments",
+            "instagram_manage_messages",
+            "pages_show_list",
+            "pages_read_engagement",
+        ]
 
     def _request(self, method, url, **kwargs):
         if url.startswith(LEGACY_BASE + "/"):
@@ -107,7 +109,7 @@ class InstagramUnifiedProvider(InstagramProvider):
                     "client_business_id": str(business),
                     "config_id": str(self.credentials["config_id"]),
                 },
-                "can_message": False,
+                "can_message": True,
             }
             for a in accounts
             if a.get("id")

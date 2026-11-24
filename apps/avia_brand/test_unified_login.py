@@ -67,13 +67,15 @@ def test_code_exchange_keeps_suat_expiration_without_legacy_refresh():
     assert call.call_args.kwargs["params"]["redirect_uri"] == "https://example.com/callback/"
 
 
-def test_unified_does_not_advertise_unimplemented_inbox():
+def test_unified_supports_inbox_and_webhooks():
+    """instagram_unified delegates inbox/webhook handling to InstagramProvider."""
     from apps.social_accounts.webhooks import supports_webhooks
-    from providers.base import SocialProvider
+    from providers.instagram import InstagramProvider
 
     p = provider()
-    assert not supports_webhooks(p)
-    assert type(p).get_messages is SocialProvider.get_messages
+    assert supports_webhooks(p)
+    # get_messages is inherited from InstagramProvider, not the no-op base
+    assert type(p).get_messages is InstagramProvider.get_messages
 
 
 def test_empty_assigned_edge_recovers_only_token_authorized_ig():
